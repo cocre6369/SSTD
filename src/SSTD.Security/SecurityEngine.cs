@@ -36,7 +36,7 @@ public sealed class SecurityEngine(IPolicyContext context, Func<string, string>?
             if (apps.Count == 0) return SecurityDecision.Deny("No installed application matches that name. Ask the user for its installed name or local executable path.");
             if (apps.Count > 1) return SecurityDecision.Deny("Several applications match. Ask the user to choose: " + string.Join(", ", apps.Take(6).Select(a => a.Name)) + ".");
             var app = apps[0];
-            if (ApplicationPolicy.IsBlocked(app.Path, app.OriginalName + " " + app.Description) || ApplicationPolicy.IsBlockedName(app.Name + ".exe") || (app.AppUserModelId is not null && ApplicationPolicy.IsBlockedPackage(app.AppUserModelId, app.Name)) || (app.AppUserModelId is null && ApplicationPolicy.IsScriptOrInstaller(app.Path))) return SecurityDecision.Deny("The resolved application is outside the ordinary-application safety boundary.");
+            if ((ApplicationPolicy.IsBlocked(app.Path, app.OriginalName) || ApplicationPolicy.IsBlocked(app.Path, app.Description)) || ApplicationPolicy.IsBlockedName(app.Name + ".exe") || (app.AppUserModelId is not null && ApplicationPolicy.IsBlockedPackage(app.AppUserModelId, app.Name)) || (app.AppUserModelId is null && ApplicationPolicy.IsScriptOrInstaller(app.Path))) return SecurityDecision.Deny("The resolved application is outside the ordinary-application safety boundary.");
             return new(true, "Resolved installed application passed the application policy.", permission, Target: app.AppUserModelId ?? app.Path);
         }
         if (action.Name == "OpenDocument")

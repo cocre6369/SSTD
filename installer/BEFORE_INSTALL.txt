@@ -1,0 +1,9 @@
+SSTD — Super Terminal of Deepthinking
+
+SSTD is a local AI desktop assistant. Ollama is a separate dependency and is NOT bundled. No AI model or Ollama software is installed silently.
+
+Desktop control starts disabled. Review Settings before enabling it. SSTD cannot guarantee reliable automation of inaccessible applications and is not an operating-system sandbox.
+
+The installer installs only SSTD and its shortcuts for the current Windows user. The uninstaller removes SSTD application files, not your documents, Ollama, or Ollama models. Clear local history in Settings before uninstalling if desired.
+
+Windows 10 version 2004 (build 19041) or later, Windows 11, x64. Administrator privileges are not required.

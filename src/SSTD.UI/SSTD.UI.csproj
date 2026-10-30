@@ -14,4 +14,5 @@
     <ProjectReference Include="..\SSTD.Security\SSTD.Security.csproj" />
     <ProjectReference Include="..\SSTD.Memory\SSTD.Memory.csproj" />
   </ItemGroup>
+  <ItemGroup><Resource Include="..\..\assets\SSTD.png" Link="Assets\SSTD.png" /><Resource Include="..\..\assets\SSTD.ico" Link="Assets\SSTD.ico" /></ItemGroup>
 </Project>

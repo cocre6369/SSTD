@@ -21,6 +21,9 @@ jobs:
         run: dotnet build SSTD.sln -c Release --no-restore
       - name: Independent security and unit tests
         run: dotnet test tests/SSTD.Tests/SSTD.Tests.csproj -c Release --no-build --logger "trx;LogFileName=tests.trx" --results-directory artifacts/test-results
+      - name: Real Windows UI Automation tests
+        shell: pwsh
+        run: ./tools/Windows-Integration.ps1
       - name: Publish self-contained executable
         run: dotnet publish src/SSTD.UI/SSTD.UI.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o artifacts/publish
       - name: Executable startup smoke test

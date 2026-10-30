@@ -60,6 +60,7 @@ public sealed class SecurityEngine(IPolicyContext context) : ISecurityEngine
         if (target.IsElevated) return SecurityDecision.Deny("SSTD does not automate elevated applications. Use a normal, non-administrator application window.");
         if (target.IsPasswordContext || target.Elements.Any(e => e.ControlType == "Password")) return SecurityDecision.Deny("A password or authentication field is present. Stop and ask the user to authenticate manually; no observation or input will be performed.");
         if (action.Name == "WaitForElement") return new(true, "Bounded UI observation.", permission, Target: target.Title);
+        if (!settings.UiAutomation && action.Name is not ("CaptureRelevantScreenRegion" or "Navigate")) return SecurityDecision.Deny("UI Automation is disabled. Only application launch, observation, and permitted navigation are available; visual-only clicks require password screening.");
         var element = action.Arguments.ContainsKey("elementId") ? target.Find(action.Str("elementId")) : target.Find(target.FocusedElementId ?? "");
         if (action.Arguments.ContainsKey("elementId") && element is null) return SecurityDecision.Deny("The element ID is stale or belongs to another window. Inspect the current interface again.");
         var label = string.Join(" ", element?.Name, element?.AutomationId);

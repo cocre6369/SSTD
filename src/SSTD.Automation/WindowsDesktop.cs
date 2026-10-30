@@ -11,6 +11,9 @@ public sealed class WindowsDesktop : IWindowsSnapshotProvider, IApplicationResol
     private readonly Dictionary<string, (AutomationElement Element, int[] RuntimeId, string Name, string Type, Rect Bounds)> _elements = new();
     private readonly Dictionary<string, DateTime> _windows = new();
     private int _sequence;
+    private readonly Dictionary<string, string> _stableIds = new();
+    private readonly object _cacheLock = new();
+    public bool EnableStructuredInspection { get; set; } = true;
     public Task<WindowSnapshot> CaptureAsync(CancellationToken ct) => Task.Run(() => Capture(ct), ct);
     public Task<WindowSnapshot?> FindWindowAsync(string name, CancellationToken ct) => Task.Run(() =>
     {
@@ -52,8 +55,11 @@ public sealed class WindowsDesktop : IWindowsSnapshotProvider, IApplicationResol
         var id = h.ToInt64().ToString(); _windows[id] = DateTime.UtcNow;
         var snapshot = new WindowSnapshot { WindowId = id, ProcessId = pid, Title = SensitiveData.Redact(title), ProcessName = process, ProcessPath = path, ClassName = cls,
             IsBlocked = blocked || pid == Environment.ProcessId, IsElevated = elevated ?? false, Warnings = warnings, BlockedReason = blocked ? "Application capability is prohibited." : null };
-        if (!inspect || snapshot.IsBlocked || elevated != false || SecurityEngine.TargetBlock(snapshot).Length > 0) return snapshot with { IsPasswordContext = SecurityEngine.TargetBlock(snapshot).Length > 0 };
-        _elements.Clear();
+        if (!inspect || !EnableStructuredInspection || snapshot.IsBlocked || elevated != false || SecurityEngine.TargetBlock(snapshot).Length > 0) return snapshot with { IsPasswordContext = SecurityEngine.TargetBlock(snapshot).Length > 0 };
+        lock (_cacheLock)
+        {
+            if (_elements.Count > 4000) { _elements.Clear(); _stableIds.Clear(); }
+        }
         var elements = new List<UiElement>(); string? focused = null; var password = false;
         try
         {
@@ -72,7 +78,10 @@ public sealed class WindowsDesktop : IWindowsSnapshotProvider, IApplicationResol
                 var isPassword = false;
                 try { isPassword = e.Current.IsPassword; } catch (ElementNotAvailableException) { continue; }
                 if (isPassword || RegexIsPassword(name + " " + autoId)) password = true;
-                var eid = "e" + (++_sequence);
+                var runtimeId = e.GetRuntimeId();
+                var identity = pid + ":" + string.Join(".", runtimeId);
+                string eid;
+                lock (_cacheLock) { if (!_stableIds.TryGetValue(identity, out eid!)) { eid = "e" + (++_sequence); _stableIds[identity] = eid; } }
                 var r = e.Current.BoundingRectangle;
                 var bounds = double.IsInfinity(r.Width) || double.IsInfinity(r.X) ? new Rect(0, 0, 0, 0) : new Rect(r.X, r.Y, Math.Max(0, r.Width), Math.Max(0, r.Height));
                 var value = "";
@@ -88,7 +97,7 @@ public sealed class WindowsDesktop : IWindowsSnapshotProvider, IApplicationResol
                     CanScroll = e.TryGetCurrentPattern(ScrollPattern.Pattern, out _), CanInvoke = invoke, CanEdit = edit, Depth = depth,
                     Selected = e.TryGetCurrentPattern(SelectionItemPattern.Pattern, out var sp) && ((SelectionItemPattern)sp).Current.IsSelected };
                 elements.Add(element);
-                _elements[eid] = (e, e.GetRuntimeId(), name, type, bounds);
+                lock (_cacheLock) { _elements[eid] = (e, runtimeId, name, type, bounds); }
                 try { if (focus is not null && e.GetRuntimeId().SequenceEqual(focus.GetRuntimeId())) focused = eid; } catch (ElementNotAvailableException) { }
                 if (depth < 22)
                 {
@@ -110,7 +119,8 @@ public sealed class WindowsDesktop : IWindowsSnapshotProvider, IApplicationResol
     }
     internal AutomationElement Resolve(WindowSnapshot w, string id)
     {
-        if (!_elements.TryGetValue(id, out var entry)) throw new InvalidOperationException("The element reference is no longer current. Inspect again.");
+        (AutomationElement Element, int[] RuntimeId, string Name, string Type, Rect Bounds) entry;
+        lock (_cacheLock) { if (!_elements.TryGetValue(id, out entry)) throw new InvalidOperationException("The element reference is no longer current. Inspect again."); }
         var root = AutomationElement.FromHandle(w.Handle);
         if ((int)Native.Pid(w.Handle) != entry.Element.Current.ProcessId) throw new InvalidOperationException("Window ownership changed.");
         var current = entry.Element;

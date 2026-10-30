@@ -1,3 +1,4 @@
+[assembly: Xunit.CollectionBehavior(DisableTestParallelization = true)]
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;

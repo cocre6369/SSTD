@@ -40,6 +40,7 @@ jobs:
         shell: pwsh
         run: dotnet publish tools/SSTD.TestApp/SSTD.TestApp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o artifacts/test-fixture
       - name: Real Windows UI Automation tests
+        timeout-minutes: 3
         shell: pwsh
         run: ./tools/Windows-Integration.ps1
       - name: Preserve Windows integration diagnostic

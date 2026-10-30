@@ -22,6 +22,7 @@ public partial class App : System.Windows.Application
     private Mutex? _mutex;
     private bool _ownsMutex;
     private MainWindow? _window;
+    private bool _exiting;
     public bool SmokeMode { get; private set; }
     private static string SmokeDirectory => Environment.GetEnvironmentVariable("SSTD_SMOKE_DIR") ?? Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory;
     protected override async void OnStartup(StartupEventArgs e)
@@ -30,13 +31,7 @@ public partial class App : System.Windows.Application
         SmokeMode = e.Args.Contains("--smoke-test", StringComparer.Ordinal);
         _mutex = new Mutex(true, @"Local\SSTD.Desktop.SingleInstance", out _ownsMutex);
         if (!_ownsMutex && !SmokeMode) { System.Windows.MessageBox.Show("SSTD is already running. Check the taskbar or system tray.", "SSTD"); Shutdown(); return; }
-        DispatcherUnhandledException += (_, args) =>
-        {
-            SensitiveData.Redact(args.Exception.Message);
-            if (_services?.GetService<MainViewModel>() is { } vm) vm.Error = "Unexpected error: " + SensitiveData.SafeError(args.Exception);
-            args.Handled = true;
-            if (SmokeMode) { try { File.WriteAllText(Path.Combine(SmokeDirectory, "smoke-error.txt"), SensitiveData.SafeError(args.Exception)); } catch { } Shutdown(1); }
-        };
+        DispatcherUnhandledException += OnDispatcherUnhandledException;
         try
         {
             if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "startup");
@@ -102,7 +97,7 @@ public partial class App : System.Windows.Application
     }
     public void NotifyTaskFinished(string status)
     {
-        if (SmokeMode) return;
+        if (SmokeMode || _exiting) return;
         if (_settings.SoundEffects) System.Media.SystemSounds.Asterisk.Play();
         if (_settings.Notifications && _tray is not null) { _tray.Visible = true; _tray.BalloonTipTitle = "SSTD"; _tray.BalloonTipText = "Task " + status.ToLowerInvariant() + ". Open SSTD to review the result."; _tray.ShowBalloonTip(3000); if (!_settings.SystemTray) _tray.Visible = false; }
     }
@@ -125,8 +120,21 @@ public partial class App : System.Windows.Application
         }
         catch (Exception ex) { await File.WriteAllTextAsync(output, "FAIL: " + SensitiveData.SafeError(ex)); Shutdown(3); }
     }
+    private void OnDispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs args)
+    {
+        args.Handled = true;
+        if (_exiting) return;
+        try
+        {
+            if (_services?.GetService<MainViewModel>() is { } vm) vm.Error = "Unexpected error: " + SensitiveData.SafeError(args.Exception);
+            if (SmokeMode) { File.WriteAllText(Path.Combine(SmokeDirectory, "smoke-error.txt"), SensitiveData.SafeError(args.Exception)); Shutdown(1); }
+        }
+        catch { if (SmokeMode) Shutdown(1); }
+    }
     protected override void OnExit(ExitEventArgs e)
     {
+        _exiting = true;
+        DispatcherUnhandledException -= OnDispatcherUnhandledException;
         _tray?.Dispose();
         if (_services is not null) { _services.GetService<MainViewModel>()?.DisposeAsync().AsTask().GetAwaiter().GetResult(); _services.Dispose(); }
         if (_ownsMutex) _mutex?.ReleaseMutex(); _mutex?.Dispose(); base.OnExit(e);

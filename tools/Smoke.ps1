@@ -25,4 +25,6 @@ if (Test-Path "$dir/smoke-result.txt") { Copy-Item "$dir/smoke-result.txt" "$art
 if (Test-Path "$dir/smoke-error.txt") { Copy-Item "$dir/smoke-error.txt" "$art/smoke-error.txt" -Force }
 if (Test-Path "$dir/smoke-stage.txt") { Copy-Item "$dir/smoke-stage.txt" "$art/smoke-stage.txt" -Force }
 if (Test-Path "$dir/smoke-stdout.txt") { Copy-Item "$dir/smoke-stdout.txt" "$art/smoke-stdout.txt" -Force }
+if (Test-Path "$dir/smoke-boot.txt") { Copy-Item "$dir/smoke-boot.txt" "$art/smoke-boot.txt" -Force }
+if (Test-Path "$dir/smoke-unhandled.txt") { Copy-Item "$dir/smoke-unhandled.txt" "$art/smoke-unhandled.txt" -Force }
 if (-not $exited -or $p.ExitCode -ne 0 -or $result -notmatch '^PASS:') { throw "Executable smoke test failed (exited=$exited exit=$($p.ExitCode)). See smoke-launch.log." }

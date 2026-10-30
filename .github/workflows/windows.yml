@@ -110,6 +110,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: ./tools/Publish-CiLog.ps1 -Path artifacts/smoke-launch.log
+      - name: Preserve executable boot diagnostic
+        if: always()
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./tools/Publish-CiLog.ps1 -Path artifacts/smoke-boot.txt
+      - name: Preserve executable unhandled diagnostic
+        if: always()
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./tools/Publish-CiLog.ps1 -Path artifacts/smoke-unhandled.txt
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y
       - name: Build installer

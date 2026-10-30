@@ -7,8 +7,8 @@
 
 ## Download and run
 
-**Download page:** https://cocre6369.github.io/SSTD/  
-**Direct release:** https://github.com/cocre6369/SSTD/releases/tag/v1.0.0
+**Download guide:** [DOWNLOAD.md](DOWNLOAD.md)  
+**Download page / Releases:** https://github.com/cocre6369/SSTD/releases/tag/v1.0.0
 
 1. Download `SSTD-Setup.exe` from the download page or Releases page.
 2. Verify its SHA-256 against `SHA256SUMS.txt`. The build is unsigned unless a signed release is explicitly identified.

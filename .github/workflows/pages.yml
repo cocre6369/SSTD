@@ -1,11 +1,7 @@
 name: Download page
 
 on:
-  push:
-    branches: [arena/6dc16062-sstd]
-    paths:
-      - 'site/**'
-      - '.github/workflows/pages.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read

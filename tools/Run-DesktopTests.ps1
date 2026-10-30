@@ -10,6 +10,7 @@ if(Get-LocalUser -Name $user -ErrorAction SilentlyContinue){Remove-LocalUser -Na
 New-LocalUser -Name $user -Password $secure -AccountNeverExpires -PasswordNeverExpires:$false | Out-Null
 $rule=New-Object System.Security.AccessControl.FileSystemAccessRule($user,'Modify','ContainerInherit,ObjectInherit','None','Allow')
 $acl=Get-Acl (Join-Path $Repository 'artifacts');$acl.AddAccessRule($rule);Set-Acl (Join-Path $Repository 'artifacts') $acl
+$repoAcl=Get-Acl $Repository;$repoAcl.AddAccessRule($rule);Set-Acl $Repository $repoAcl
 $inner=Join-Path $Repository 'artifacts/run-desktop-inner.ps1'
 @"
 Set-Location '$Repository'

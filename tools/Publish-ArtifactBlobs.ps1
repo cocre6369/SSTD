@@ -7,7 +7,7 @@ $chunk=$ChunkMB*1MB
 $count=[int][Math]::Ceiling($bytes.Length/$chunk)
 for($i=0;$i -lt $count;$i++){
   $offset=$i*$chunk; $len=[Math]::Min($chunk,$bytes.Length-$offset)
-  $part=new byte[$len]; [Array]::Copy($bytes,$offset,$part,0,$len)
+  [byte[]]$part=[byte[]]::new($len); [Array]::Copy($bytes,$offset,$part,0,$len)
   $body=@{content=[Convert]::ToBase64String($part);encoding='base64'}|ConvertTo-Json -Compress
   try {
     $blob=$body | gh api "repos/$env:GITHUB_REPOSITORY/git/blobs" --method POST --input - | ConvertFrom-Json

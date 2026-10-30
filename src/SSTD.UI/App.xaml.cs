@@ -35,7 +35,7 @@ public partial class App : System.Windows.Application
             SensitiveData.Redact(args.Exception.Message);
             if (_services?.GetService<MainViewModel>() is { } vm) vm.Error = "Unexpected error: " + SensitiveData.SafeError(args.Exception);
             args.Handled = true;
-            if (SmokeMode) Shutdown(1);
+            if (SmokeMode) { try { File.WriteAllText(Path.Combine(SmokeDirectory, "smoke-error.txt"), SensitiveData.SafeError(args.Exception)); } catch { } Shutdown(1); }
         };
         try
         {

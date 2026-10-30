@@ -23,7 +23,7 @@ try {
     if (-not ($sdks | Where-Object { $_ -match '^8\.0\.' })) { throw '.NET 8 SDK is required. Install with: winget install Microsoft.DotNet.SDK.8' }
     $artifacts = Join-Path $root 'artifacts'
     New-Item -ItemType Directory -Force $artifacts | Out-Null
-    if (-not $NoRestore) { & dotnet restore SSTD.sln --runtime win-x64; if ($LASTEXITCODE) { throw 'Restore failed.' } }
+    if (-not $NoRestore) { & dotnet restore SSTD.sln --runtime win-x64 -p:Platform="Any CPU"; if ($LASTEXITCODE) { throw 'Restore failed.' } }
     & dotnet build SSTD.sln -c Release --no-restore -p:Version=$Version
     if ($LASTEXITCODE) { throw 'Build failed.' }
     if (-not $SkipTests) {

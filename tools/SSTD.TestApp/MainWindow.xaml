@@ -2,7 +2,7 @@
   <Grid Margin="20"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
     <TextBox x:Name="Editor" AutomationProperties.Name="Fixture Document" AutomationProperties.AutomationId="editor" AcceptsReturn="True" Height="100" FontSize="18" Text="Initial document"/>
     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10"><Button x:Name="ActionButton" AutomationProperties.Name="Apply fixture action" Width="170" Height="36" Click="Apply_Click"/><TextBlock x:Name="ResultText" AutomationProperties.Name="Fixture Result" Text="Not applied" Margin="15,8" FontSize="16"/></StackPanel>
-    <PasswordBox Grid.Row="2" AutomationProperties.Name="Fixture Password" Height="35" Margin="0,10"/>
+    <PasswordBox x:Name="ProtectedField" Grid.Row="2" AutomationProperties.Name="Fixture Password" Height="35" Margin="0,10"/>
     <TextBlock Grid.Row="3" Text="Scrollable library (virtualized)" FontSize="16" Margin="0,5"/>
     <ListBox Grid.Row="4" x:Name="Library" AutomationProperties.Name="Fixture Library" AutomationProperties.AutomationId="library" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True" FontSize="18"/>
   </Grid>

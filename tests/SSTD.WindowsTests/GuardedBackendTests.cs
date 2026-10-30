@@ -15,6 +15,7 @@ public class GuardedBackendTests
     [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(nint h,out uint pid);
     private static uint WindowPid(nint h,out uint pid)=>GetWindowThreadProcessId(h,out pid);
     private sealed class DenyApprovals : IApprovalBroker { public Task<bool> ApproveAsync(ApprovalRequest r,CancellationToken ct)=>Task.FromResult(false); }
+    private sealed class StubProvider(ISecurityEngine? security) : IServiceProvider { public object? GetService(Type serviceType) => serviceType == typeof(ISecurityEngine) ? security : null; }
     private sealed class Services : IActionServices
     {
         public Task<string> ComposeAsync(string instruction,CancellationToken ct)=>Task.FromResult("test");
@@ -41,9 +42,9 @@ public class GuardedBackendTests
             }
             Assert.NotNull(w);Assert.True(w!.Elements.Count>3, System.Text.Json.JsonSerializer.Serialize(w));Assert.False(w.IsPasswordContext);Assert.True(WindowsDesktop.Focus(w.Handle));
             w=await desktop.CaptureAsync(CancellationToken.None);
-            var backend=new DesktopBackend(desktop,new InputController(desktop),null!,()=>settings,null!,new Services(),new WindowsVisualObserver());
+            var backend=new DesktopBackend(desktop,new InputController(desktop),()=>settings,null!,new Services(),new WindowsVisualObserver(),new StubProvider(null!));
             var security=new SecurityEngine(backend);
-            backend=new DesktopBackend(desktop,new InputController(desktop),security,()=>settings,new WindowsVisualObserver(),new Services(),new WindowsVisualObserver());
+            backend=new DesktopBackend(desktop,new InputController(desktop),()=>settings,new WindowsVisualObserver(),new Services(),new WindowsVisualObserver(),new StubProvider(security));
             var executor=new ActionExecutor(security,new DenyApprovals(),backend,new Services());
             var editor=w.Elements.First(e=>e.AutomationId=="editor");
             var typed=await executor.ExecuteAsync(A("TypeText",new{text="SSTD guarded real input",elementId=editor.Id,append=false}),CancellationToken.None);

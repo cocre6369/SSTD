@@ -266,8 +266,10 @@ public partial class MainViewModel : ObservableObject, IAsyncDisposable
         _streaming = false;
     });
     partial void OnHistoryFilterChanged(string value) => _ = LoadHistoryAsync();
+    private bool _disposed;
     public async ValueTask DisposeAsync()
     {
+        if (_disposed) return; _disposed = true;
         _statusCts?.Cancel(); _runCts?.Cancel(); _pullCts?.Cancel();
         _runner.EventRaised -= OnEvent; _runner.TokenRaised -= OnToken; _runner.ReplyCompleted -= OnReplyCompleted;
         _statusCts?.Dispose(); _runGate.Dispose(); await Task.CompletedTask;

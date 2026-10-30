@@ -136,7 +136,7 @@ public partial class App : System.Windows.Application
         _exiting = true;
         DispatcherUnhandledException -= OnDispatcherUnhandledException;
         _tray?.Dispose();
-        if (_services is not null) { _services.GetService<MainViewModel>()?.DisposeAsync().AsTask().GetAwaiter().GetResult(); _services.Dispose(); }
+        if (_services is not null) { _services.DisposeAsync().AsTask().GetAwaiter().GetResult(); }
         if (_ownsMutex) _mutex?.ReleaseMutex(); _mutex?.Dispose(); base.OnExit(e);
     }
 }

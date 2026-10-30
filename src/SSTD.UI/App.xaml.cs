@@ -58,9 +58,13 @@ public partial class App : System.Windows.Application
             collection.AddSingleton<AgentRunner>();
             collection.AddSingleton<MainViewModel>();
             _services = collection.BuildServiceProvider();
+            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "smoke-stage.txt"), "services-built");
             ApplyPreferences(_settings);
             _window = new MainWindow(_services.GetRequiredService<MainViewModel>()); MainWindow = _window;
-            CreateTray(); _window.Show();
+            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "smoke-stage.txt"), "window-constructed");
+            CreateTray();
+            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "smoke-stage.txt"), "tray-created");
+            _window.Show();
             if (SmokeMode) { await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "smoke-stage.txt"), "window-shown"); await RunSmokeAsync(); }
         }
         catch (Exception ex)

@@ -3,7 +3,7 @@ $ErrorActionPreference='Stop'
 $result=Join-Path $Repository 'artifacts/desktop-test-exit.txt'
 $log=Join-Path $Repository 'artifacts/desktop-task.log'
 Remove-Item $result,$log -ErrorAction SilentlyContinue
-$user='sstdci'
+$user='sstdci'+[guid]::NewGuid().ToString('N').Substring(0,8)
 $password='Sstd!'+[guid]::NewGuid().ToString('N')+'Aa1'
 $secure=ConvertTo-SecureString $password -AsPlainText -Force
 if(Get-LocalUser -Name $user -ErrorAction SilentlyContinue){Remove-LocalUser -Name $user}

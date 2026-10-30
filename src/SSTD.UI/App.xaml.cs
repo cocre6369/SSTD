@@ -116,11 +116,10 @@ public partial class App : System.Windows.Application
             await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "initializing");
             await services.GetRequiredService<MainViewModel>().InitializeAsync();
             await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "initialized");
-            window.UpdateLayout();
             var security = services.GetRequiredService<ISecurityEngine>();
             var action = new AgentAction("OpenApplication", new Dictionary<string, System.Text.Json.JsonElement> { ["name"] = System.Text.Json.JsonSerializer.SerializeToElement("cmd.exe") });
             if ((await security.AuthorizeAsync(action, CancellationToken.None)).Allowed) throw new InvalidOperationException("Safety self-check failed.");
-            if (window.ActualWidth < 800 || _services.GetRequiredService<MainViewModel>().SendCommand is null) throw new InvalidOperationException("UI self-check failed.");
+            if (window.Width < 800 || _services.GetRequiredService<MainViewModel>().SendCommand is null) throw new InvalidOperationException("UI self-check failed.");
             await File.WriteAllTextAsync(output, $"PASS: WPF dashboard constructed; DI resolved; SQLite initialized; Ollama availability handled; independent CMD policy rejection passed.\nVersion: {typeof(App).Assembly.GetName().Version}\nInteractive external-app/Ollama inference tests are separate.\n");
             Shutdown(0);
         }

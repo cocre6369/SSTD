@@ -1,0 +1,17 @@
+# Known limitations and safe alternatives
+
+1. **Not an OS sandbox.** A policy engine in the same user session cannot mathematically prevent every capability of every arbitrary GUI. Use Windows Sandbox, a separate standard account, or enterprise application control for stronger isolation.
+2. **UI coverage varies.** UIA exposes different controls in Win32, WPF, WinForms, Electron, Chromium, Office and custom renderers. Virtualized lists do not expose every item at once. SSTD searches/scrolls bounded regions rather than assuming invisible content exists.
+3. **OCR is text recognition, not universal visual semantics.** Icon-only controls may remain inaccessible. OCR boxes can be inaccurate; SSTD requires fresh boxes and hit testing. It does not implement a general object detector or video-understanding pipeline.
+4. **No direct DOM/browser debugging connection.** Browser DOM information is used only where exposed through Windows accessibility. There is no extension, remote-debugging port, cookie access or browser database reader.
+5. **Model quality matters.** Local models can misunderstand goals, produce invalid JSON or stop early. The schema/executor rejects invalid actions and bounds retries. There is no guarantee that a particular model can complete a long workflow.
+6. **Verification is explicit but not omniscient.** Text read-back and window changes are evidence, not proof of every user intention. An opaque player or canvas may require manual confirmation. Copy intentionally does not inspect clipboard contents and is marked unverified.
+7. **Office formatting is UI/model-driven.** Normal editing/formatting shortcuts are available, but arbitrary styles, layout and two-page guarantees are not. The new DOCX writer supports paragraphs and `# ` headings, not full Word layout automation.
+8. **Existing-file editing/saving is not supported.** Normal typing can modify an open document in memory. SSTD blocks Save/Save As to prevent overwrites and creates new approved files instead. The user must manually save/export existing documents if desired. Do not close an edited document without reviewing it.
+9. **External-action classification is imperfect.** Known labels and communication editors are guarded; an unfamiliar unlabeled “send” icon cannot be reliably inferred. Review high-risk workflows manually.
+10. **STOP is cooperative.** It prevents subsequent input and cancels waits/streams, but cannot retract a delivered click, keystroke, message, process launch or file creation. Do not interact with the desktop while automation is running.
+11. **Windows OCR needs an installed OCR language pack.** SSTD does not modify Windows language/security settings. Missing OCR is reported, not simulated.
+12. **No automatic CAPTCHA, authentication, UAC or password handling.** Stop and authenticate manually. SSTD does not retain screenshots to remember a password.
+13. **Unsigned development builds may trigger SmartScreen.** Use source/checksum verification or a properly signed release; never disable antivirus to install SSTD.
+14. **Local history is not encrypted.** Secret screening is best effort. Disable history for sensitive work and use Windows account/disk protection.
+15. **Third-party acceptance is environment-specific.** Word, Spotify, Chrome/YouTube, Discord and game launchers require their actual installed versions, account state, network and desktop session. CI cannot certify every combination.

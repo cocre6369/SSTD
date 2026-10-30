@@ -1,7 +1,7 @@
 name: Portable tests
 on: [push, pull_request, workflow_dispatch]
 permissions:
-  contents: read
+  contents: write
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -10,4 +10,16 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-      - run: dotnet test tests/SSTD.Tests/SSTD.Tests.csproj -c Release
+      - name: Portable test suite
+        shell: pwsh
+        run: ./tools/Invoke-Dotnet.ps1 -Log artifacts/portable.log -Command test,tests/SSTD.Tests/SSTD.Tests.csproj,-c,Release,--logger,trx
+      - name: Preserve test diagnostic
+        if: failure()
+        shell: pwsh
+        run: ./tools/Publish-CiLog.ps1 -Path artifacts/portable.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: portable-test-results
+          path: artifacts/portable.log
+          if-no-files-found: warn

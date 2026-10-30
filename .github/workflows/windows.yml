@@ -5,7 +5,7 @@ on:
   pull_request:
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   windows:
     runs-on: windows-latest
@@ -21,8 +21,17 @@ jobs:
       - name: Build
         shell: pwsh
         run: ./tools/Invoke-Dotnet.ps1 -Log artifacts/build.log -Command build,SSTD.sln,-c,Release,--no-restore
+      - name: Preserve build diagnostic
+        if: failure()
+        shell: pwsh
+        run: ./tools/Publish-CiLog.ps1 -Path artifacts/build.log
       - name: Independent security and unit tests
-        run: dotnet test tests/SSTD.Tests/SSTD.Tests.csproj -c Release --no-build --logger "trx;LogFileName=tests.trx" --results-directory artifacts/test-results
+        shell: pwsh
+        run: ./tools/Invoke-Dotnet.ps1 -Log artifacts/unit.log -Command test,tests/SSTD.Tests/SSTD.Tests.csproj,-c,Release,--no-build,--logger,trx,--results-directory,artifacts/test-results
+      - name: Preserve unit test diagnostic
+        if: failure()
+        shell: pwsh
+        run: ./tools/Publish-CiLog.ps1 -Path artifacts/unit.log
       - name: Real Windows UI Automation tests
         shell: pwsh
         run: ./tools/Windows-Integration.ps1

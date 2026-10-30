@@ -183,3 +183,22 @@ public class IdentitySecurityTests
         Assert.False(d.Allowed);
     }
 }
+
+public class DocumentHandlerTests
+{
+    [Fact]
+    public async Task Missing_Association_Resolver_Fails_Closed_For_Existing_File()
+    {
+        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".txt");
+        await File.WriteAllTextAsync(path, "test");
+        try
+        {
+            var settings = new SstdSettings { DesktopControl = true };
+            // The path gate fails before a handler is needed outside the allowed user folders.
+            var d = await new SecurityEngine(new PolicyContext(settings,null)).AuthorizeAsync(
+                new AgentAction("OpenDocument",new Dictionary<string,JsonElement>{["path"]=JsonSerializer.SerializeToElement(path)}),CancellationToken.None);
+            Assert.False(d.Allowed);
+        }
+        finally { File.Delete(path); }
+    }
+}

@@ -49,7 +49,7 @@ public partial class App : System.Windows.Application
             collection.AddSingleton<ITextComposer, TextComposer>(); collection.AddSingleton<INewDocumentWriter, NewDocumentWriter>();
             collection.AddSingleton<DesktopBackend>(); collection.AddSingleton<IDesktopBackend>(x => x.GetRequiredService<DesktopBackend>()); collection.AddSingleton<IPolicyContext>(x => x.GetRequiredService<DesktopBackend>());
             collection.AddSingleton<IActionServices, ActionServices>(); collection.AddSingleton<IApprovalBroker, ApprovalBroker>();
-            collection.AddSingleton<ISecurityEngine, SecurityEngine>(); collection.AddSingleton<IActionExecutor, ActionExecutor>();
+            collection.AddSingleton<ISecurityEngine>(sp => new SecurityEngine(sp.GetRequiredService<IPolicyContext>(), ApplicationDiscovery.DocumentHandler)); collection.AddSingleton<IActionExecutor, ActionExecutor>();
             collection.AddSingleton<IAgentPlanner, OllamaPlanner>();
             collection.AddSingleton<Func<SstdSettings>>(_ => () => _settings);
             collection.AddSingleton<Action<SstdSettings>>(_ => value => _settings = value);

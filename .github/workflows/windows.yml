@@ -36,6 +36,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: ./tools/Publish-CiLog.ps1 -Path artifacts/unit.log
+      - name: Publish real Windows test fixture
+        shell: pwsh
+        run: dotnet publish tools/SSTD.TestApp/SSTD.TestApp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o artifacts/test-fixture
       - name: Real Windows UI Automation tests
         shell: pwsh
         run: ./tools/Windows-Integration.ps1

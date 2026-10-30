@@ -153,3 +153,33 @@ public class AdditionalSecurityTests
         Assert.False(ApplicationPolicy.IsBlocked(@"C:\Windows\System32\notepad.exe","notepad.exe","Untitled - Notepad","Notepad"));
     }
 }
+
+public class IdentitySecurityTests
+{
+    private sealed class Context(ApplicationCandidate candidate, WindowSnapshot? window = null) : IPolicyContext
+    {
+        public Func<SstdSettings> Settings => () => new SstdSettings { DesktopControl = true };
+        public Task<WindowSnapshot?> CurrentAsync(CancellationToken ct) => Task.FromResult(window);
+        public Task<WindowSnapshot?> WindowAsync(string id, CancellationToken ct) => Task.FromResult(window);
+        public Task<ApplicationCandidate> ResolveApplicationAsync(string name, CancellationToken ct) => Task.FromResult(candidate);
+    }
+    private static AgentAction A(string name, object args) => new(name, JsonSerializer.SerializeToElement(args).EnumerateObject().ToDictionary(x => x.Name, x => x.Value.Clone()));
+    [Theory]
+    [InlineData("cmd.exe","Windows Command Processor")]
+    [InlineData("pwsh.exe","PowerShell")]
+    [InlineData("powershell.exe","Windows PowerShell")]
+    [InlineData("regedit.exe","Registry Editor")]
+    public async Task Renamed_System_Executable_Is_Blocked_By_PE_Identity(string original, string description)
+    {
+        var c=new ApplicationCandidate("Friendly editor", @"C:\Program Files\Friendly\editor.exe",null,"Test",original,description);
+        var d=await new SecurityEngine(new Context(c)).AuthorizeAsync(A("OpenApplication",new{name="Friendly editor"}),CancellationToken.None);
+        Assert.False(d.Allowed);
+    }
+    [Fact]
+    public async Task Renamed_Console_Window_Is_Blocked()
+    {
+        var w=new WindowSnapshot{WindowId="1",Title="Friendly editor",ProcessPath=@"C:\Program Files\Friendly\editor.exe",ProcessName="cmd.exe",ClassName="ConsoleWindowClass"};
+        var d=await new SecurityEngine(new Context(new("editor","editor",null,"Test"),w)).AuthorizeAsync(A("ReadText",new{}),CancellationToken.None);
+        Assert.False(d.Allowed);
+    }
+}

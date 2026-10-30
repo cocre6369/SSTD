@@ -109,6 +109,15 @@ public static class ApplicationDiscovery
             finally { Marshal.FinalReleaseComObject(manager); }
         }
         if (ApplicationPolicy.IsScriptOrInstaller(c.Path) || !File.Exists(c.Path)) throw new InvalidOperationException("Only existing ordinary executables can be launched.");
+        using (var stream = File.OpenRead(c.Path))
+        using (var pe = new System.Reflection.PortableExecutable.PEReader(stream))
+        {
+            if (pe.PEHeaders.CoffHeader.Machine != System.Reflection.PortableExecutable.Machine.Amd64 ||
+                pe.PEHeaders.PEHeader?.Subsystem is not (System.Reflection.PortableExecutable.Subsystem.WindowsGui or System.Reflection.PortableExecutable.Subsystem.WindowsCui))
+                throw new InvalidOperationException("The executable format is not supported.");
+            if (pe.PEHeaders.PEHeader.Subsystem == System.Reflection.PortableExecutable.Subsystem.WindowsCui)
+                throw new InvalidOperationException("Console-subsystem executables are blocked, including renamed shells.");
+        }
         // No shell, no command line, no arguments, no runas verb. Shortcut arguments are deliberately discarded.
         var p = Process.Start(new ProcessStartInfo { FileName = c.Path, UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = Path.GetDirectoryName(c.Path) ?? Environment.CurrentDirectory });
         return p?.Id ?? throw new InvalidOperationException("Windows did not start the application.");
@@ -123,10 +132,20 @@ public static class ApplicationDiscovery
         }
         else
         {
-            // Only the allow-listed document extensions reach the file association handler.
+            // Validate the actual file association executable before ShellExecute; a .txt association to a shell is not a bypass.
+            var handler = AssociationExecutable(Path.GetExtension(path));
+            if (handler.Length == 0 || ApplicationPolicy.IsBlocked(handler, ApplicationDiscovery.Describe(handler).OriginalName, ApplicationDiscovery.Describe(handler).Description) || ApplicationPolicy.IsScriptOrInstaller(handler))
+                throw new InvalidOperationException("The document's associated application is blocked or unavailable. Open it manually in an ordinary application.");
             using var p = Process.Start(new ProcessStartInfo(path) { UseShellExecute = true, Verb = "open" });
         }
     }
+    private static string AssociationExecutable(string extension)
+    {
+        var buffer = new StringBuilder(32768); var size = (uint)buffer.Capacity;
+        var hr = AssocQueryString(0x00000400, 2, extension, "open", buffer, ref size);
+        return hr == 0 ? Environment.ExpandEnvironmentVariables(buffer.ToString()) : "";
+    }
+    [DllImport("shlwapi.dll", CharSet = CharSet.Unicode)] private static extern int AssocQueryString(uint flags, uint str, string assoc, string? extra, StringBuilder output, ref uint size);
     private static string Normalize(string s) => new(s.ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray());
 }
 [ComImport, Guid("00021401-0000-0000-C000-000000000046")] internal class CShellLink { }

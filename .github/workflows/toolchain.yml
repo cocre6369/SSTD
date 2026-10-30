@@ -1,21 +1,34 @@
 name: Prepare Linux build SDK
 on:
   push:
-    paths: ['.github/workflows/toolchain.yml']
+    paths:
+      - '.github/workflows/toolchain.yml'
   workflow_dispatch:
-permissions: contents: read
+permissions:
+  contents: write
 jobs:
   sdk:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-      - name: Archive official SDK
-        run: tar -czf dotnet-sdk-linux-x64.tar.gz -C "$DOTNET_ROOT" .
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dotnet-sdk-linux-x64
-          path: dotnet-sdk-linux-x64.tar.gz
-          retention-days: 1
-          compression-level: 0
+      - name: Cache official SDK as temporary Git blobs (no branch or commit)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          tar --sort=name --mtime='2020-01-01' --owner=0 --group=0 --numeric-owner -czf /tmp/sdk.tar.gz -C "$DOTNET_ROOT" .
+          split -b 40M -d /tmp/sdk.tar.gz /tmp/sdk-part-
+          for part in /tmp/sdk-part-*; do
+            python - "$part" <<'PY'
+          import base64,json,os,sys,urllib.request
+          path=sys.argv[1]
+          body=json.dumps({'content':base64.b64encode(open(path,'rb').read()).decode(),'encoding':'base64'}).encode()
+          req=urllib.request.Request('https://api.github.com/repos/'+os.environ['REPO']+'/git/blobs',data=body,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'})
+          sha=json.load(urllib.request.urlopen(req))['sha']
+          print('::notice title=SDK_PART::'+os.path.basename(path)+' '+sha)
+          PY
+          done

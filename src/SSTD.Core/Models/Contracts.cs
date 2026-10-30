@@ -61,7 +61,7 @@ public sealed record ActionResult(bool Success, bool Verified, string Message, W
 }
 public enum Permission { ReadOnly, DesktopInteraction, ExternalCommit, NewFile }
 public sealed record ApprovalRequest(string Id, string Action, string Target, string Details, Permission Permission);
-public sealed record SecurityDecision(bool Allowed, string Reason, Permission Permission = ReadOnly, bool RequiresApproval = false, string? Target = null)
+public sealed record SecurityDecision(bool Allowed, string Reason, Permission Permission = Permission.ReadOnly, bool RequiresApproval = false, string? Target = null)
 {
     public static SecurityDecision Deny(string reason) => new(false, reason);
 }

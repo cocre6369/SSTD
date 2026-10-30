@@ -45,6 +45,11 @@ public sealed class SecurityEngine(IPolicyContext context) : ISecurityEngine
             if (!IsSafeReadPath(path, out var reason, allowDirectory: true)) return SecurityDecision.Deny(reason);
             string[] extensions = [".txt", ".md", ".rtf", ".docx", ".xlsx", ".pptx", ".pdf", ".csv", ".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".mp3", ".mp4", ".mkv", ".wav", ".mov"];
             if (!Directory.Exists(path) && !extensions.Contains(Path.GetExtension(path).ToLowerInvariant())) return SecurityDecision.Deny("This document type is not permitted. Executable, script, macro-enabled, and shortcut files cannot be opened.");
+            if (File.Exists(path))
+            {
+                var handler = Automation.ApplicationDiscovery.DocumentHandler(path); var candidate = Automation.ApplicationDiscovery.Describe(handler);
+                if (!IsSafeExecutablePath(handler, out var handlerReason) || ApplicationPolicy.IsBlocked(handler, candidate.OriginalName, candidate.Description)) return SecurityDecision.Deny("The document's associated application is blocked: " + handlerReason);
+            }
             return new(true, "Read/open only; an existing file will never be replaced.", permission, Target: path);
         }
         WindowSnapshot? target = null;
@@ -84,7 +89,11 @@ public sealed class SecurityEngine(IPolicyContext context) : ISecurityEngine
             if (IsFileManager(target) && key is "delete" or "backspace" or "f2" or "enter") return SecurityDecision.Deny("File deletion, renaming, and blind activation in file lists are blocked. Open a validated document explicitly.");
             if (key is "delete" or "backspace" && (element is null || !IsTextEdit(element))) return SecurityDecision.Deny("Delete/Backspace is only allowed in an identified text editor, never in a file or account list.");
             if (key is "f2" or "f12" or "f5") return SecurityDecision.Deny("This function key can open a save, rename, developer, or execution surface; use a safer registered action.");
-            if (key is "enter" or "return" && element is not null && IsExternalEditor(target, element)) return External(permission, target, "Press Enter in a message composer");
+            if (key is "enter" or "return")
+            {
+                var browserForm = Regex.IsMatch(target.ProcessName, @"^(?:chrome|msedge|firefox|brave|opera|vivaldi)(?:\.exe)?$", RegexOptions.IgnoreCase) && !Regex.IsMatch(element?.Name ?? "", @"^(?:address|search|url|omnibox)", RegexOptions.IgnoreCase);
+                if (browserForm || (element is not null && IsExternalEditor(target, element))) return External(permission, target, "Press Enter in a form or message composer");
+            }
             return new(true, "Allow-listed productivity key.", permission, Target: target.Title);
         }
         if (action.Name == "UseShortcut")

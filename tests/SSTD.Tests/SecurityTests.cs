@@ -158,10 +158,10 @@ public class IdentitySecurityTests
 {
     private sealed class Context(ApplicationCandidate candidate, WindowSnapshot? window = null) : IPolicyContext
     {
-        public Func<SstdSettings> Settings => () => new SstdSettings { DesktopControl = true };
-        public Task<WindowSnapshot?> CurrentAsync(CancellationToken ct) => Task.FromResult(window);
+        public SstdSettings Settings => new() { DesktopControl = true };
+        public Task<WindowSnapshot> CurrentAsync(CancellationToken ct) => Task.FromResult(window ?? new WindowSnapshot { IsBlocked = true });
         public Task<WindowSnapshot?> WindowAsync(string id, CancellationToken ct) => Task.FromResult(window);
-        public Task<ApplicationCandidate> ResolveApplicationAsync(string name, CancellationToken ct) => Task.FromResult(candidate);
+        public Task<IReadOnlyList<ApplicationCandidate>> ApplicationsAsync(string name, CancellationToken ct) => Task.FromResult<IReadOnlyList<ApplicationCandidate>>([candidate]);
     }
     private static AgentAction A(string name, object args) => new(name, JsonSerializer.SerializeToElement(args).EnumerateObject().ToDictionary(x => x.Name, x => x.Value.Clone()));
     [Theory]

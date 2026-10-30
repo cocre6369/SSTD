@@ -123,9 +123,29 @@ public static class ApplicationDiscovery
         var p = Process.Start(new ProcessStartInfo { FileName = c.Path, UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = Path.GetDirectoryName(c.Path) ?? Environment.CurrentDirectory });
         return p?.Id ?? throw new InvalidOperationException("Windows did not start the application.");
     }
+    public static string DocumentHandler(string path)
+    {
+        var length = 32768U; var text = new StringBuilder((int)length);
+        // ASSOCF_INIT_IGNOREUNKNOWN=0x400, ASSOCSTR_EXECUTABLE=2. Resolve, never execute a command string.
+        Marshal.ThrowExceptionForHR(Native.AssocQueryString(0x400, 2, Path.GetExtension(path), null, text, ref length));
+        var value = text.ToString();
+        var exe = value.StartsWith('"') ? value[1..].Split('"')[0] : value;
+        if (!exe.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+        {
+            var index = exe.IndexOf(".exe ", StringComparison.OrdinalIgnoreCase);
+            if (index < 0) throw new InvalidOperationException("The document association does not resolve to a verifiable executable.");
+            exe = exe[..(index + 4)];
+        }
+        return Path.GetFullPath(Environment.ExpandEnvironmentVariables(exe.Trim()));
+    }
     public static void OpenDocument(string path)
     {
         if (!File.Exists(path) && !Directory.Exists(path)) throw new FileNotFoundException("Document or folder not found.");
+        if (File.Exists(path))
+        {
+            var handler = DocumentHandler(path); var candidate = Describe(handler);
+            if (ApplicationPolicy.IsBlocked(handler, candidate.OriginalName, candidate.Description) || !File.Exists(handler)) throw new InvalidOperationException("The document handler is blocked or unavailable.");
+        }
         if (Directory.Exists(path))
         {
             var explorer = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");

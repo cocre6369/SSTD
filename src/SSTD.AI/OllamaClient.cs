@@ -139,7 +139,7 @@ public sealed class OllamaClient : IOllamaClient, IDisposable
     }
     public static void ValidateModel(string model)
     {
-        if (string.IsNullOrWhiteSpace(model) || model.Length > 200 || !System.Text.RegularExpressions.Regex.IsMatch(model, @"^[a-zA-Z0-9][a-zA-Z0-9._:/-]*$") || model.Contains("..", StringComparison.Ordinal)) throw new ArgumentException("Choose an installed Ollama model with a valid name.");
+        if (string.IsNullOrWhiteSpace(model) || model.Length > 200 || !System.Text.RegularExpressions.Regex.IsMatch(model, @"\A[a-zA-Z0-9][a-zA-Z0-9._:/-]*\z") || model.Contains("..", StringComparison.Ordinal)) throw new ArgumentException("Choose an installed Ollama model with a valid name.");
     }
     public void Dispose() => _http.Dispose();
 }

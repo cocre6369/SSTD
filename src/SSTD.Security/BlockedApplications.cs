@@ -42,6 +42,7 @@ public static class ApplicationPolicy
             path.Contains(@"WindowsApps\Microsoft.Windows.Console", StringComparison.OrdinalIgnoreCase)) return true;
         // An allow-list for the few genuinely ordinary inbox apps; other Windows tools fail closed.
         string[] inboxExceptions = [@"\windows\explorer.exe", @"\windows\notepad.exe", @"\windows\system32\notepad.exe", @"\windows\system32\mspaint.exe", @"\windows\winhlp32.exe"];
+        if (ApplicationPolicy.IsScriptOrInstaller(file) && path.Contains(@"\windows\", StringComparison.OrdinalIgnoreCase)) return true;
         if (file.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) &&
             (path.Contains(@"\windows\system32\", StringComparison.OrdinalIgnoreCase) || path.Contains(@"\windows\syswow64\", StringComparison.OrdinalIgnoreCase)) &&
             !inboxExceptions.Any(x => path.EndsWith(x, StringComparison.OrdinalIgnoreCase))) return true;

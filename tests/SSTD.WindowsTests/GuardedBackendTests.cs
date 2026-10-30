@@ -39,7 +39,7 @@ public class GuardedBackendTests
                 if(handle!=0){w=await desktop.DescribeAsyncForTest(handle);if(w.Elements.Count>3)break;}
                 await Task.Delay(200);
             }
-            Assert.NotNull(w);Assert.False(w!.IsPasswordContext);Assert.True(WindowsDesktop.Focus(w.Handle));
+            Assert.NotNull(w);Assert.True(w!.Elements.Count>3, System.Text.Json.JsonSerializer.Serialize(w));Assert.False(w.IsPasswordContext);Assert.True(WindowsDesktop.Focus(w.Handle));
             w=await desktop.CaptureAsync(CancellationToken.None);
             var backend=new DesktopBackend(desktop,new InputController(desktop),null!,()=>settings,null!,new Services(),new WindowsVisualObserver());
             var security=new SecurityEngine(backend);

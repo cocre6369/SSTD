@@ -48,6 +48,7 @@ jobs:
           try { (& query.exe session 2>&1 | Out-String) | Tee-Object artifacts/session.log -Append } catch { $_ | Out-String | Tee-Object artifacts/session.log -Append }
           Get-Process explorer -ErrorAction SilentlyContinue | Select-Object Id,SessionId,MainWindowHandle | Out-String | Tee-Object artifacts/session.log -Append
           Get-Command PsExec64,PsExec -ErrorAction SilentlyContinue | Out-String | Tee-Object artifacts/session.log -Append
+          whoami /groups | Select-String "Mandatory Label" | Out-String | Tee-Object artifacts/session.log -Append
           exit 0
       - name: Publish session diagnostic
         if: always()
@@ -58,7 +59,7 @@ jobs:
       - name: Real Windows UI Automation tests
         timeout-minutes: 3
         shell: pwsh
-        run: ./tools/Windows-Integration.ps1
+        run: ./tools/Run-DesktopTests.ps1
       - name: Preserve Windows integration diagnostic
         if: always()
         shell: pwsh

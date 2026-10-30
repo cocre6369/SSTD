@@ -34,7 +34,7 @@ public class WindowsIntegrationTests
             var desktop=new WindowsDesktop(); p.WaitForInputIdle(10000); WindowSnapshot? snapshot=null;
             var deadline=DateTime.UtcNow.AddSeconds(20);
             while(DateTime.UtcNow<deadline) { var h=desktop.Handles().FirstOrDefault(h=>{ try{return (ProcessHelper.GetWindowThreadProcessId(h,out var pid)==0?pid:pid)==p.Id;}catch{return false;} }); if(h!=0) { snapshot=desktop.Describe(h,true,CancellationToken.None); if(snapshot.Elements.Count>0)break; } Thread.Sleep(200); }
-            Assert.NotNull(snapshot); Assert.Contains(snapshot.Elements,e=>e.ControlType=="Password"); Assert.True(snapshot!.IsPasswordContext); Assert.Empty(snapshot.Elements);
+            Assert.NotNull(snapshot); Assert.True(snapshot!.IsPasswordContext, System.Text.Json.JsonSerializer.Serialize(snapshot)); Assert.Empty(snapshot.Elements);
             Assert.Contains("Credential",string.Join(" ",snapshot.Warnings));
         }
         finally { if(!p.HasExited)p.Kill(); }

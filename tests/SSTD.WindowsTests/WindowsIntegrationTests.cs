@@ -49,7 +49,7 @@ public class WindowsIntegrationTests
             while(DateTime.UtcNow<deadline) { var h=desktop.Handles().FirstOrDefault(h=>{ try{return (ProcessHelper.GetWindowThreadProcessId(h,out var pid)==0?pid:pid)==p.Id;}catch{return false;} }); if(h!=0) { w=desktop.Describe(h,true,CancellationToken.None); if(w.Elements.Any(e=>e.CanEdit))break; } Thread.Sleep(250); }
             Assert.NotNull(w); Assert.False(w!.IsPasswordContext);
             var editor=w.Elements.First(e=>e.CanEdit); input.EnsureTarget(w,CancellationToken.None);
-            var live=desktop.Resolve(w,editor.Id); live.SetFocus(); input.Shortcut(w,["ctrl","a"],CancellationToken.None); input.Type(w,"SSTD real Windows input test\nSecond line.",CancellationToken.None);
+            var root=AutomationElement.FromHandle(w.Handle); var live=root.FindFirst(TreeScope.Descendants,new PropertyCondition(AutomationElement.AutomationIdProperty,"editor")) ?? root.FindFirst(TreeScope.Descendants,new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.Edit)); live.SetFocus(); input.Shortcut(w,["ctrl","a"],CancellationToken.None); input.Type(w,"SSTD real Windows input test\nSecond line.",CancellationToken.None);
             Thread.Sleep(500); var observed=desktop.Describe(w.Handle,true,CancellationToken.None);
             var text=string.Join("\n",observed.Elements.Select(e=>e.Value));
             if(!text.Contains("SSTD real Windows input test"))
@@ -63,11 +63,11 @@ public class WindowsIntegrationTests
         finally { if(!p.HasExited)p.Kill(); }
     }
     [Fact]
-    public void Windows_Ocr_Engine_Initialization()
+    public async Task Windows_Ocr_Engine_Initialization()
     {
         // Language packs differ by Windows image. A missing pack is an explicit environment limitation, not fake OCR.
         var observer=new WindowsVisualObserver();
-        var result=observer.InspectAsync(new WindowSnapshot{WindowId="0",IsBlocked=true},null,false,CancellationToken.None).GetAwaiter().GetResult();
+        var result=await observer.InspectAsync(new WindowSnapshot{WindowId="0",IsBlocked=true},null,false,CancellationToken.None);
         Assert.False(result.Success); Assert.Contains("protected",result.Message);
     }
 }

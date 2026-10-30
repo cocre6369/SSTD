@@ -171,7 +171,7 @@ public class IdentitySecurityTests
     [InlineData("regedit.exe","Registry Editor")]
     public async Task Renamed_System_Executable_Is_Blocked_By_PE_Identity(string original, string description)
     {
-        var c=new ApplicationCandidate("Friendly editor", @"C:\Program Files\Friendly\editor.exe",null,"Test",original,description);
+        var c=new ApplicationCandidate("Friendly editor", @"C:\Program Files\Friendly\editor.exe",null,"Test") { OriginalName = original, Description = description };
         var d=await new SecurityEngine(new Context(c)).AuthorizeAsync(A("OpenApplication",new{name="Friendly editor"}),CancellationToken.None);
         Assert.False(d.Allowed);
     }

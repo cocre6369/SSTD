@@ -18,17 +18,82 @@ public sealed class LocalStore : ISettingsStore, ITaskStore, IConversationStore,
         Directory.CreateDirectory(DataDirectory);
         _connectionString = new SqliteConnectionStringBuilder { DataSource = Path.Combine(DataDirectory, "sstd.db"), Mode = SqliteOpenMode.ReadWriteCreate, ForeignKeys = true }.ToString();
     }
+    private static readonly string[] TaskColumns = ["id", "request", "status", "created", "updated"];
+    private const string CreateTasksSql = "CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY NOT NULL,request TEXT NOT NULL,status TEXT NOT NULL,created TEXT NOT NULL,updated TEXT NOT NULL);";
     private async Task<SqliteConnection> OpenAsync(CancellationToken ct)
     {
         var db = new SqliteConnection(_connectionString); await db.OpenAsync(ct).ConfigureAwait(false);
         if (!_initialized)
         {
-            using var cmd = db.CreateCommand();
-            cmd.CommandText = "PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT NOT NULL); CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY,request TEXT NOT NULL,status TEXT NOT NULL,created TEXT NOT NULL,updated TEXT NOT NULL); CREATE TABLE IF NOT EXISTS events(id INTEGER PRIMARY KEY AUTOINCREMENT,task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,time TEXT NOT NULL,phase TEXT NOT NULL,message TEXT NOT NULL,success INTEGER NOT NULL); CREATE INDEX IF NOT EXISTS events_task ON events(task_id,id); CREATE TABLE IF NOT EXISTS messages(id INTEGER PRIMARY KEY AUTOINCREMENT,role TEXT NOT NULL,content TEXT NOT NULL);";
-            await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false); _initialized = true;
+            await EnsureSchemaAsync(db, ct).ConfigureAwait(false);
+            _initialized = true;
         }
         return db;
     }
+    private static async Task EnsureSchemaAsync(SqliteConnection db, CancellationToken ct)
+    {
+        await ExecAsync(db, "PRAGMA journal_mode=WAL;", ct).ConfigureAwait(false);
+        await ExecAsync(db, "CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT NOT NULL);", ct).ConfigureAwait(false);
+        await ExecAsync(db, "CREATE TABLE IF NOT EXISTS messages(id INTEGER PRIMARY KEY AUTOINCREMENT,role TEXT NOT NULL,content TEXT NOT NULL);", ct).ConfigureAwait(false);
+        await MigrateTasksAsync(db, ct).ConfigureAwait(false);
+        await ExecAsync(db, "PRAGMA foreign_keys=ON;", ct).ConfigureAwait(false);
+        await ExecAsync(db, "CREATE TABLE IF NOT EXISTS events(id INTEGER PRIMARY KEY AUTOINCREMENT,task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,time TEXT NOT NULL,phase TEXT NOT NULL,message TEXT NOT NULL,success INTEGER NOT NULL); CREATE INDEX IF NOT EXISTS events_task ON events(task_id,id);", ct).ConfigureAwait(false);
+    }
+    private static async Task MigrateTasksAsync(SqliteConnection db, CancellationToken ct)
+    {
+        var columns = await GetColumnsAsync(db, "tasks", ct).ConfigureAwait(false);
+        if (columns.Count == 0)
+        {
+            await ExecAsync(db, CreateTasksSql, ct).ConfigureAwait(false);
+            return;
+        }
+        // Older builds can leave a wider or differently ordered tasks table. Normalize it instead of
+        // relying on INSERT INTO tasks VALUES(...), which fails when the column count differs.
+        if (columns.Count == TaskColumns.Length && TaskColumns.All(columns.Contains)) return;
+
+        var now = DateTimeOffset.UtcNow.ToString("O");
+        string DefaultFor(string column) => column switch
+        {
+            "id" => "lower(hex(randomblob(16)))",
+            "request" => Literal(""),
+            "status" => Literal("Unknown"),
+            _ => Literal(now)
+        };
+        string Expression(string column) => columns.Contains(column)
+            ? $"COALESCE(NULLIF(CAST({Quote(column)} AS TEXT), ''), {DefaultFor(column)})"
+            : DefaultFor(column);
+
+        await ExecAsync(db, "PRAGMA foreign_keys=OFF;", ct).ConfigureAwait(false);
+        try
+        {
+            using var tx = db.BeginTransaction();
+            await ExecAsync(db, "DROP TABLE IF EXISTS tasks_migrated;", ct, tx).ConfigureAwait(false);
+            await ExecAsync(db, "CREATE TABLE tasks_migrated(id TEXT PRIMARY KEY NOT NULL,request TEXT NOT NULL,status TEXT NOT NULL,created TEXT NOT NULL,updated TEXT NOT NULL);", ct, tx).ConfigureAwait(false);
+            await ExecAsync(db, $"INSERT OR IGNORE INTO tasks_migrated(id,request,status,created,updated) SELECT {string.Join(", ", TaskColumns.Select(Expression))} FROM tasks;", ct, tx).ConfigureAwait(false);
+            await ExecAsync(db, "DROP TABLE tasks;", ct, tx).ConfigureAwait(false);
+            await ExecAsync(db, "ALTER TABLE tasks_migrated RENAME TO tasks;", ct, tx).ConfigureAwait(false);
+            tx.Commit();
+        }
+        finally
+        {
+            await ExecAsync(db, "PRAGMA foreign_keys=ON;", ct).ConfigureAwait(false);
+        }
+    }
+    private static async Task<HashSet<string>> GetColumnsAsync(SqliteConnection db, string table, CancellationToken ct)
+    {
+        using var cmd = db.CreateCommand(); cmd.CommandText = $"PRAGMA table_info({Quote(table)});";
+        using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
+        var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        while (await reader.ReadAsync(ct).ConfigureAwait(false)) columns.Add(reader.GetString(1));
+        return columns;
+    }
+    private static async Task ExecAsync(SqliteConnection db, string sql, CancellationToken ct, SqliteTransaction? tx = null)
+    {
+        using var cmd = db.CreateCommand(); cmd.Transaction = tx; cmd.CommandText = sql;
+        await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+    }
+    private static string Quote(string identifier) => "\"" + identifier.Replace("\"", "\"\"") + "\"";
+    private static string Literal(string value) => "'" + value.Replace("'", "''") + "'";
     private async Task<T> WithDb<T>(Func<SqliteConnection, Task<T>> work, CancellationToken ct)
     {
         await _gate.WaitAsync(ct).ConfigureAwait(false);
@@ -49,7 +114,7 @@ public sealed class LocalStore : ISettingsStore, ITaskStore, IConversationStore,
     }
     public Task CreateAsync(TaskRecord r, CancellationToken ct) => !HistoryEnabled ? Task.CompletedTask : WithDb(async db =>
     {
-        using var cmd = db.CreateCommand(); cmd.CommandText = "INSERT INTO tasks VALUES($id,$request,$status,$created,$updated)";
+        using var cmd = db.CreateCommand(); cmd.CommandText = "INSERT INTO tasks(id,request,status,created,updated) VALUES($id,$request,$status,$created,$updated)";
         cmd.Parameters.AddWithValue("$id", r.Id); cmd.Parameters.AddWithValue("$request", SensitiveData.Redact(r.Request)); cmd.Parameters.AddWithValue("$status", r.Status);
         cmd.Parameters.AddWithValue("$created", r.Created.ToString("O")); cmd.Parameters.AddWithValue("$updated", r.Updated.ToString("O"));
         await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false); return true;

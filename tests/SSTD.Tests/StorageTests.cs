@@ -42,4 +42,38 @@ public class StorageTests : IAsyncLifetime
         using var zip = System.IO.Compression.ZipFile.OpenRead(path); Assert.NotNull(zip.GetEntry("word/document.xml")); Assert.NotNull(zip.GetEntry("[Content_Types].xml"));
         using var reader = new StreamReader(zip.GetEntry("word/document.xml")!.Open()); var xml = await reader.ReadToEndAsync(); Assert.Contains("Heading1",xml); Assert.Contains("&amp;",xml);
     }
+    [Fact] public async Task Legacy_Tasks_Table_With_Extra_Columns_Is_Repaired()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "sstd-legacy-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        try
+        {
+            var cs = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder { DataSource = Path.Combine(dir, "sstd.db") }.ToString();
+            using (var db = new Microsoft.Data.Sqlite.SqliteConnection(cs))
+            {
+                await db.OpenAsync();
+                using var cmd = db.CreateCommand();
+                cmd.CommandText = @"CREATE TABLE tasks(id TEXT PRIMARY KEY, request TEXT NOT NULL, status TEXT NOT NULL, created TEXT NOT NULL, updated TEXT NOT NULL, c6 TEXT, c7 TEXT, c8 TEXT, c9 TEXT, c10 TEXT);
+INSERT INTO tasks VALUES('legacy','old request','Completed','2026-01-01T00:00:00+00:00','2026-01-02T00:00:00+00:00',NULL,NULL,NULL,NULL,NULL);
+CREATE TABLE events(id INTEGER PRIMARY KEY AUTOINCREMENT,task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,time TEXT NOT NULL,phase TEXT NOT NULL,message TEXT NOT NULL,success INTEGER NOT NULL);
+INSERT INTO events(task_id,time,phase,message,success) VALUES('legacy','2026-01-01T00:00:00+00:00','Verify','kept',1);";
+                await cmd.ExecuteNonQueryAsync();
+            }
+            await using var store = new LocalStore(dir);
+            await store.LoadAsync(default);
+            await store.CreateAsync(new("new", "new request", "Running", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow), default);
+            var list = await store.ListAsync(default);
+            Assert.Contains(list, t => t.Id == "legacy");
+            Assert.Contains(list, t => t.Id == "new");
+            var detail = await store.GetAsync("legacy", default);
+            Assert.NotNull(detail);
+            Assert.Equal("old request", detail!.Task.Request);
+            Assert.Single(detail.Events);
+        }
+        finally
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            try { Directory.Delete(dir, true); } catch (IOException) { }
+        }
+    }
 }

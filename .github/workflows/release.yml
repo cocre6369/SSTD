@@ -1,11 +1,7 @@
 name: Publish installer release
 
 on:
-  push:
-    branches: [arena/6dc16062-sstd]
-    paths:
-      - '.github/workflows/release.yml'
-      - 'site/**'
+  workflow_dispatch:
 
 permissions:
   contents: write

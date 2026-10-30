@@ -5,4 +5,5 @@
 
     <ProjectReference Include="..\SSTD.Core\SSTD.Core.csproj" />
   </ItemGroup>
+  <ItemGroup><InternalsVisibleTo Include="SSTD.Tests" /></ItemGroup>
 </Project>

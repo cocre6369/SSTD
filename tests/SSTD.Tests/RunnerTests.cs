@@ -25,23 +25,23 @@ public class RunnerTests
 {
     private static AgentRunner Runner(IAgentPlanner planner,IActionExecutor executor,SstdSettings? settings=null) { var s=settings??new SstdSettings(); return new(planner,executor,new NullDesktop(),new MemorySettings(s),new NullTasks(),new NullConversations(),()=>s); }
     [Fact] public async Task Ordinary_Conversation_Needs_No_Automation()
-    { var executor=new StubExecutor(); var result=await Runner(new ScriptedPlanner(new("Paris.",null,true)),executor).RunAsync("Capital of France?",default); Assert.True(result.Success); Assert.Equal(0,executor.Calls); }
+    { var executor=new StubExecutor(); var result=await Runner(new ScriptedPlanner(new AgentReply("Paris.",null,true)),executor).RunAsync("Capital of France?",default); Assert.True(result.Success); Assert.Equal(0,executor.Calls); }
     [Fact] public async Task Executes_One_Action_Per_Reasoning_Step()
     {
         var a=new AgentAction("InspectWindow",new Dictionary<string,JsonElement>());
-        var executor=new StubExecutor(); var result=await Runner(new ScriptedPlanner(new("Inspecting",a,false),new("Done",null,true)),executor).RunAsync("Inspect",default);
+        var executor=new StubExecutor(); var result=await Runner(new ScriptedPlanner(new AgentReply("Inspecting",a,false),new("Done",null,true)),executor).RunAsync("Inspect",default);
         Assert.True(result.Success); Assert.Equal(1,executor.Calls);
     }
     [Fact] public async Task Cancellation_Prevents_Next_Action()
     {
         using var cts=new CancellationTokenSource(); cts.Cancel(); var executor=new StubExecutor();
-        var result=await Runner(new ScriptedPlanner(new("test",null,true)),executor).RunAsync("Stop",cts.Token); Assert.False(result.Success); Assert.Equal(0,executor.Calls);
+        var result=await Runner(new ScriptedPlanner(new AgentReply("test",null,true)),executor).RunAsync("Stop",cts.Token); Assert.False(result.Success); Assert.Equal(0,executor.Calls);
     }
     [Fact] public async Task Step_Limit_Does_Not_Report_Success()
     {
         var a=new AgentAction("InspectWindow",new Dictionary<string,JsonElement>());
-        var result=await Runner(new ScriptedPlanner(new("Again",a,false)),new StubExecutor(),new SstdSettings{MaxSteps=2}).RunAsync("Never finish",default); Assert.False(result.Success);
+        var result=await Runner(new ScriptedPlanner(new AgentReply("Again",a,false)),new StubExecutor(),new SstdSettings{MaxSteps=2}).RunAsync("Never finish",default); Assert.False(result.Success);
     }
     [Fact] public async Task Secret_Request_Never_Reaches_Model_Or_Executor()
-    { var planner=new ScriptedPlanner(new("bad",null,true)); var result=await Runner(planner,new StubExecutor()).RunAsync("password=SuperSecret123!",default); Assert.False(result.Success); Assert.Equal(0,((ScriptedPlanner)planner).Calls); }
+    { var planner=new ScriptedPlanner(new AgentReply("bad",null,true)); var result=await Runner(planner,new StubExecutor()).RunAsync("password=SuperSecret123!",default); Assert.False(result.Success); Assert.Equal(0,((ScriptedPlanner)planner).Calls); }
 }

@@ -1,4 +1,4 @@
-param([string]$Repository = (Split-Path $PSScriptRoot -Parent))
+param([string]$Repository = (Split-Path $PSScriptRoot -Parent), [string]$Command = './tools/Windows-Integration.ps1')
 $ErrorActionPreference='Stop'
 $result=Join-Path $Repository 'artifacts/desktop-test-exit.txt'
 $log=Join-Path $Repository 'artifacts/desktop-task.log'
@@ -23,7 +23,7 @@ $inner=Join-Path $Repository 'artifacts/run-desktop-inner.ps1'
 New-Item -ItemType Directory -Force `$env:APPDATA,`$env:LOCALAPPDATA,`$env:TEMP | Out-Null
 Set-Location '$Repository'
 'STARTED' | Set-Content '$log'
-try { ./tools/Windows-Integration.ps1 *>> '$log'; `$code=`$LASTEXITCODE; if(-not `$code){`$code=0} } catch { `$_ | Out-String | Add-Content '$log'; `$code=1 }
+try { $Command *>> '$log'; `$code=`$LASTEXITCODE; if(-not `$code){`$code=0} } catch { `$_ | Out-String | Add-Content '$log'; `$code=1 }
 Set-Content '$result' `$code
 exit `$code
 "@ | Set-Content $inner

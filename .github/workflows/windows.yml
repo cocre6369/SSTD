@@ -85,7 +85,7 @@ jobs:
         run: dotnet publish src/SSTD.UI/SSTD.UI.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o artifacts/publish
       - name: Executable startup smoke test
         shell: pwsh
-        run: ./tools/Smoke.ps1 -Exe artifacts/publish/SSTD.exe
+        run: ./tools/Run-DesktopTests.ps1 -Command "./tools/Smoke.ps1 -Exe artifacts/publish/SSTD.exe"
       - name: Preserve executable smoke diagnostic
         if: always()
         shell: pwsh

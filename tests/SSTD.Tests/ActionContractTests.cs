@@ -43,3 +43,15 @@ public class ActionContractTests
         s = new SstdSettings { DesktopControl = true, UiAutomation = false, VisualRecognition = false }; Assert.NotEqual("", s.Validate());
     }
 }
+
+public class TextEntryContractTests
+{
+    [Fact]
+    public void Explicit_Replace_Is_Preserved_As_False()
+    {
+        var result=ActionContract.Parse("{\"name\":\"TypeText\",\"arguments\":{\"text\":\"hello\",\"elementId\":\"e1\",\"append\":false}}");
+        Assert.Equal(ActionParseStatus.Valid,result.Status);
+        Assert.True(result.Action!.Arguments.ContainsKey("append"));
+        Assert.False(result.Action.Bool("append"));
+    }
+}

@@ -243,7 +243,7 @@ public sealed class DesktopBackend(WindowsDesktop desktop, InputController input
                     if (!w.ProcessName.Contains("winword", StringComparison.OrdinalIgnoreCase) && !w.ProcessName.Contains("soffice", StringComparison.OrdinalIgnoreCase) &&
                         live.TryGetCurrentPattern(ValuePattern.Pattern, out var vp) && !((ValuePattern)vp).Current.IsReadOnly)
                     {
-                        if (a.Bool("append") || a.Arguments.ContainsKey("append"))
+                        if (a.Bool("append") || (a.Arguments.ContainsKey("append") && !a.Bool("append")))
                         {
                             var value = a.Bool("append") ? ((ValuePattern)vp).Current.Value + text : text;
                             if (SensitiveData.ContainsSecret(value)) return ActionResult.Fail("Credential material is not permitted.");

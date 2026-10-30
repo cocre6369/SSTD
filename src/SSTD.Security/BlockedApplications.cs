@@ -23,7 +23,14 @@ public static class ApplicationPolicy
     private static readonly Regex Title = new(@"^(administrator\s*[:：]|administrator\s*[-–]|command prompt|windows powershell|powershell\s*[-–]|windows terminal|registry editor|task manager|services|computer management|device manager|disk management|group policy|local security policy|task scheduler|credential manager|system configuration|user account control)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     public static bool IsBlockedPackage(string appId, string name) =>
         System.Text.RegularExpressions.Regex.IsMatch(appId + " " + name, @"WindowsTerminal|PowerShell|Windows.Console|DevHome|Sysinternals|AdminCenter|Registry|Terminal|RemoteDesktop|Windows.Settings|immersivecontrolpanel|SecHealthUI|Credential|Password|Bitwarden|KeePass|1Password|LastPass", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-    public static bool IsBlockedName(string name) => Names.Contains(Normalize(name));
+    public static bool IsBlockedName(string name)
+    {
+        var file = Normalize(name);
+        if (!Path.HasExtension(file)) file += ".exe";
+        var compact = new string(file.Where(char.IsLetterOrDigit).ToArray());
+        string[] aliases = ["cmd.exe", "commandprompt.exe", "windowsterminal.exe", "powershellise.exe", "registryeditor.exe", "devicemanager.exe", "diskmanagement.exe", "taskmanager.exe", "groupolicyeditor.exe", "localsecuritypolicy.exe", "computermanagement.exe", "services.exe", "credentialmanager.exe", "systemsettings.exe", "windowssecurity.exe"];
+        return Names.Contains(file) || aliases.Contains(compact);
+    }
     public static bool IsBlocked(string path, string processName = "", string title = "", string className = "")
     {
         path = path.Replace('/', '\\');

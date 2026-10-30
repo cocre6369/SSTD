@@ -21,14 +21,20 @@ jobs:
         run: |
           set -euo pipefail
           tar --sort=name --mtime='2020-01-01' --owner=0 --group=0 --numeric-owner -czf /tmp/sdk.tar.gz -C "$DOTNET_ROOT" .
-          split -b 40M -d /tmp/sdk.tar.gz /tmp/sdk-part-
+          split -b 8M -d /tmp/sdk.tar.gz /tmp/sdk-part-
           for part in /tmp/sdk-part-*; do
             python - "$part" <<'PY'
           import base64,json,os,sys,urllib.request
           path=sys.argv[1]
           body=json.dumps({'content':base64.b64encode(open(path,'rb').read()).decode(),'encoding':'base64'}).encode()
           req=urllib.request.Request('https://api.github.com/repos/'+os.environ['REPO']+'/git/blobs',data=body,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'})
-          sha=json.load(urllib.request.urlopen(req))['sha']
+          for attempt in range(5):
+            try:
+              sha=json.load(urllib.request.urlopen(req,timeout=120))['sha']; break
+            except urllib.error.HTTPError as e:
+              print('::notice title=SDK_UPLOAD_RETRY::'+str(e.code)+' '+e.read().decode()[:300],flush=True)
+              if attempt==4: raise
+              import time; time.sleep(20*(attempt+1))
           print('::notice title=SDK_PART::'+os.path.basename(path)+' '+sha)
           PY
           done

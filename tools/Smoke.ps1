@@ -8,8 +8,7 @@ $log = Join-Path $art 'smoke-launch.log'
 "start $(Get-Date -Format o) exe=$Exe" | Set-Content $log
 Remove-Item "$art/smoke-result.txt","$art/smoke-error.txt","$art/smoke-stage.txt","$art/smoke-boot.txt","$art/smoke-unhandled.txt" -ErrorAction SilentlyContinue
 $psi = [System.Diagnostics.ProcessStartInfo]::new()
-$dll = Join-Path $dir 'SSTD.dll'
-if (Test-Path $dll) { $psi.FileName = (Get-Command dotnet).Source; $psi.Arguments = '"' + $dll + '" --smoke-test' } else { $psi.FileName = $Exe; $psi.Arguments = '--smoke-test' }
+$psi.FileName = $Exe; $psi.Arguments = '--smoke-test'
 $env:SSTD_SMOKE_DIR = $art
 $psi.UseShellExecute = $false; $psi.WorkingDirectory = $dir; $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
 $p = [System.Diagnostics.Process]::Start($psi)

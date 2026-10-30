@@ -2,17 +2,21 @@
 
 ## Windows 10/11 x64 installer
 
-**[Download SSTD-Setup.exe](https://github.com/cocre6369/SSTD/releases/download/v1.0.0/SSTD-Setup.exe)**  
-[Release page and checksums](https://github.com/cocre6369/SSTD/releases/tag/v1.0.0)
+**[Download SSTD-Setup.exe](https://github.com/cocre6369/SSTD/releases/download/v1.0.1/SSTD-Setup.exe)**  
+[Release page and checksums](https://github.com/cocre6369/SSTD/releases/tag/v1.0.1)
 
-- **Version:** 1.0.0
+- **Version:** 1.0.1
 - **File:** `SSTD-Setup.exe`
-- **Size:** 54,853,834 bytes
-- **SHA-256:** `b750b5180febfd9a30ff14c1580fe25a566d1311746012bb9bfa5e2639733d33`
+- **Size:** 54,864,609 bytes
+- **SHA-256:** `18aa983ed98b9b4c37b8aaea6e0aa1eab999962a86a70a706fb5dbf3ff675915`
 - **Install type:** per-user, Start Menu shortcut, scoped uninstaller
 - **End-user requirements:** Windows 10 2004/build 19041 or Windows 11, x64. No .NET SDK or development tools required.
 
 > The build is unsigned unless a signed release is explicitly identified. Windows SmartScreen may warn about an unknown publisher.
+
+## Upgrading from 1.0.0
+
+Install 1.0.1 over the existing installation. It repairs older local SQLite task-history schemas automatically; you do not need to delete your SSTD data folder.
 
 ## Verify the download
 
@@ -23,7 +27,7 @@ Get-FileHash .\SSTD-Setup.exe -Algorithm SHA256
 Expected SHA-256:
 
 ```text
-b750b5180febfd9a30ff14c1580fe25a566d1311746012bb9bfa5e2639733d33
+18aa983ed98b9b4c37b8aaea6e0aa1eab999962a86a70a706fb5dbf3ff675915
 ```
 
 ## Quick start

@@ -1,42 +1,27 @@
-# Automation capabilities and action reference
+# Automation architecture
 
-## Implemented observation/action mechanisms
+## Pipeline
 
-| Capability | Real backend | Verification / limitation |
-|---|---|---|
-| Installed app discovery | Start-menu `.lnk` target resolution, App Paths registry **read**, Windows AppsFolder enumeration | Resolves generic installed apps; no fixed supported-app list |
-| Launch ordinary apps | `Process.Start` with executable path and no arguments; packaged-app activation manager | Visible matching window checked; launch is not proof of the overall task |
-| Window focus/switch | Win32 foreground/restore APIs | Foreground handle and process identity checked |
-| Graceful close | `WM_CLOSE` | Does not force-kill; save/confirmation dialogs require inspection |
-| UI hierarchy | Windows UI Automation, bounded breadth-first tree | Names, types, values, bounds, enabled/offscreen/selected state, common patterns |
-| Click | Invoke, SelectionItem, Toggle, ExpandCollapse; guarded clickable-point fallback | Observes changed UI; a changed UI alone does not prove a semantic goal |
-| Find off-screen content | FindElement searches current elements, chooses a live scroll container, scrolls and reinspects | Stable IDs; bounded steps; stops at unchanged content/boundary; no blind clicks |
-| Scroll | UIA ScrollPattern, guarded wheel fallback | Checks viewport change; virtualized lists expose only currently realizable children |
-| Type | Unicode `SendInput`, or UIA ValuePattern for explicit replace/append | Read-back when supported; otherwise explicitly unverified |
-| Keyboard | Allow-listed key/chord validation and real input events | No arbitrary OS or shell shortcuts |
-| Read/select text | UIA element values and TextPattern | Visible/permitted app content only |
-| Copy | Real Ctrl+C | Clipboard is not read or stored, so copy content is not claimed verified |
-| Visual fallback | Relevant-window/region capture + Windows.Media.Ocr | OCR line boxes; optional image to a local vision-capable model; no persistent screenshots |
-| OCR click | Fresh observed line box, live foreground/hit-test checks | Text recognition is not button semantics; stale boxes rejected |
-| Browser navigation | Ctrl+L, URL input, Enter in a focused browser | HTTP(S) public hosts only; inspect actual loaded content before relying on it |
-| Document composition | Separate local Ollama request | Returns a draft; does not pretend it was inserted |
-| New document files | Exclusive text or OpenXML DOCX writer | One-shot approval; content read-back; no overwrite |
-| External commitment | Known risky control/draft detection + modal approval | Unfamiliar opaque UI cannot be classified perfectly |
+1. `SSTD.UI` submits a request and exposes actual runner events.
+2. `SSTD.AI.OllamaClient` streams a local Ollama response. `OllamaPlanner` requires one schema-constrained action or a final answer.
+3. `SSTD.Core.ActionContract` parses and validates action names, argument names/types, ranges and lengths. Unknown fields/actions are rejected.
+4. `SSTD.Security.SecurityEngine` independently evaluates policy against live window/process/application metadata.
+5. `ActionExecutor` requests approval when needed, rechecks the decision and delegates only to the controlled backend.
+6. `WindowsDesktop` uses Windows UI Automation, runtime IDs, control patterns and window/process metadata. `InputController` uses real UIA patterns or Win32 SendInput.
+7. The runner observes again after each action. Success messages distinguish dispatched from verified results. Repetition, invalid output, step count and elapsed time are bounded.
 
 ## Registered actions
 
-`OpenApplication`, `OpenDocument`, `FocusWindow`, `SwitchWindow`, `CloseApplication`, `ClickElement`, `TypeText`, `PasteText`, `PressKey`, `UseShortcut`, `Scroll`, `FindElement`, `ReadText`, `SelectText`, `CopyText`, `WaitForElement`, `WaitForApplication`, `InspectWindow`, `InspectUIHierarchy`, `CaptureRelevantScreenRegion`, `Navigate`, `ComposeText`, `CreateDocument`.
+OpenApplication, OpenDocument, FocusWindow, CloseApplication, ClickElement, TypeText, PasteText, PressKey, UseShortcut, Scroll, FindElement, ReadText, SelectText, CopyText, SwitchApplication, WaitForElement, WaitForApplication, InspectWindow, InspectUIHierarchy, CaptureRelevantScreenRegion, Navigate, ComposeText, CreateDocument.
 
-Arguments are strictly validated in `SSTD.Core/Actions/AgentAction.cs`. No arbitrary command action exists. `elementId` and `windowId` must refer to current observations; model-invented IDs are rejected. The backend reacquires UIA elements and checks process identity before acting.
+Element IDs refer to observed controls, not model-invented screen coordinates. UIA invoke/value/selection/text/scroll patterns are preferred. Fallback pointer clicks use the live clickable point and hit-test the same process; occluded/out-of-window targets are refused. There is no arbitrary-coordinate action.
 
-## Application examples — not special cases
+Application discovery dynamically enumerates Start Menu shortcuts, App Paths and Windows AppsFolder. It is not a fixed supported-app list. Launches have no model-supplied arguments or elevation. Installed applications and packaged apps must still pass the blocked-capability policy.
 
-- **Notepad/Word:** open the installed app, inspect its startup UI, select a new blank document, locate the editor, compose locally, enter text, inspect read-back. Exact ribbon labels vary by Office version. Creating a new approved DOCX is a safer alternative when direct editing is inaccessible.
-- **Spotify/YouTube/media:** inspect actual controls, search, scroll results, select a matching item, then inspect title/player state. There is no Spotify API integration or guaranteed playback-state detector for custom canvases.
-- **Chrome/Edge/Firefox:** use the browser's accessibility tree where exposed. SSTD does not inject browser extensions or read the DOM through a debugging port. Browser processes may need accessibility enabled; OCR is a fallback, not a DOM substitute.
-- **Discord/Slack/email:** inspect channels and visible messages; explicit approval before entering/committing external messages where detected. Authentication is manual.
-- **Multi-app:** one action and fresh observation at a time. There is no pre-generated blind click batch.
+`FindElement` searches the observed hierarchy, then performs bounded policy-checked scrolling and fresh observations. It does not click a similar-looking item just to make progress. Virtualized lists and inaccessible canvases may require a different UIA view or may not be automatable.
 
-## Not implemented as universal guarantees
+`CreateDocument` writes UTF-8 text/Markdown or a minimal valid OOXML Word document with headings, paragraphs and bullets. It reads back the result. It is not a full Word layout engine and does not edit/overwrite existing files. Multi-app transfer can use observed text and typed entry without exposing clipboard contents.
 
-Pixel-perfect understanding of every game/canvas; DirectX/OpenGL overlay automation; human-equivalent video comprehension; automatic CAPTCHA solving; arbitrary Office formatting macros; browser-internal DOM access; robust detection of every purchase/send icon; autonomous recovery from every modal; full OS sandboxing. These are explicit limitations, not hidden mock implementations.
+## Visual fallback
+
+Windows OCR and optional local vision are supplements, not continuous screen recording. Visual observation is guarded by password/window policy. OCR IDs are short-lived and must be reobserved. A model vision capability is queried from Ollama before sending an image. If reliable observation is unavailable, the task stops or asks for clarification.

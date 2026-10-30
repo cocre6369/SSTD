@@ -1,50 +1,20 @@
 # Ollama setup
 
-SSTD does **not** contain Ollama, its service, or model weights. It connects to a loopback HTTP API, normally `http://localhost:11434`.
+SSTD uses **http://localhost:11434** by default. Only loopback HTTP endpoints are accepted. It never falls back to a cloud model.
 
-## Windows installation
+1. Install Ollama yourself from the official Ollama Windows download. SSTD's install action opens that page only after confirmation; it does not silently install software.
+2. Start Ollama normally (not as administrator). Verify `ollama list` yourself if desired. SSTD itself never launches a terminal.
+3. In SSTD Settings, select a model or explicitly download one. A download shows its exact name/size when available and requires confirmation. Pull progress is streamed and cancellable.
+4. Enable desktop control only after reading the security boundary.
 
-1. Download Ollama yourself from https://ollama.com/download/windows, or use SSTD's **Install Ollama** button to open that page. SSTD never runs the installer.
-2. Review and run the official installer. Start Ollama normally.
-3. Install a model with explicit permission. Either use SSTD Settings → AI engine → Download…, or run these commands yourself in your own terminal:
-   ```powershell
-   ollama pull qwen2.5:7b
-   ollama list
-   ```
-4. In SSTD, retry the connection and select the installed model.
-5. Test conversation first: “What can you do, and what will you refuse?”
-6. Review Settings → Automation, then enable desktop control. Start with Notepad.
+## Model choice
 
-SSTD's terminal blocking applies to its **automation engine**. You may use your own terminal to administer Ollama; SSTD will not operate that terminal.
+Start with a recent instruction-following model that fits your RAM/VRAM, such as `qwen2.5:7b-instruct` or `llama3.1:8b`. Larger 14B/32B models may plan better but need more memory and are slower. Names are examples, not a supported-app list; use the tags actually available in your Ollama installation. Tool/function calling support alone does not guarantee reliable structured desktop planning.
 
-## Model recommendations
+For visual fallback choose a vision model such as `qwen2.5vl:7b` or `llama3.2-vision:11b`, subject to available hardware and Ollama support. SSTD queries `/api/show` capabilities and will not send screenshots to a model not identified as vision-capable. Windows OCR does not require a vision model.
 
-| System | Suggested starting point | Trade-off |
-|---|---|---|
-| 8 GB RAM / modest CPU | `qwen2.5:3b` | Lower memory; more planning errors and clarification |
-| 16 GB RAM / modern CPU or 8 GB VRAM | `qwen2.5:7b` | Practical starting point for structured planning |
-| 24–32 GB RAM / 12–16 GB VRAM | `qwen2.5:14b` | Better reasoning, slower and more memory |
-| Vision needed | `qwen2.5vl:7b` or another available Ollama vision model | Requires more memory; SSTD checks `/api/show` capabilities |
+Model files can be several gigabytes. SSTD does not download one at startup. If Ollama is absent, the dashboard reports the actual connection error and chat/automation remain unavailable; settings and history still work. If a selected model is missing, choose an installed model or explicitly pull it.
 
-These are recommendations, not bundled dependencies or benchmark guarantees. Model tags/availability and hardware requirements can change. Check the official library before downloading. Tool-capable instruct models and low temperature (0.1–0.3) are more important than branding. A larger model does not remove the security boundary or guarantee task success.
+## Privacy and limits
 
-Start with 8192 context and 2048 maximum output tokens. Increase only if the model and memory allow it. A model load or CPU-only inference may take minutes; SSTD uses bounded request/inactivity timeouts and a visible Stop command.
-
-## API behavior
-
-- `GET /api/version`: availability.
-- `GET /api/tags`: installed models.
-- `POST /api/show`: capability discovery, including vision.
-- `POST /api/chat`: streaming NDJSON; constrained JSON response for action planning.
-- `POST /api/pull`: model download only after explicit modal approval, with actual Ollama progress.
-
-Endpoints with remote hosts, credentials, query strings or non-root paths are rejected. Automatic redirects are disabled. SSTD does not call cloud AI APIs. Websites and applications being automated still make their own normal network requests.
-
-## Troubleshooting
-
-- **Offline:** confirm Ollama is running, check the port in Settings, then Retry. SSTD does not silently start or install a service.
-- **No models:** explicitly download one; model installation is separate from the app installer.
-- **Model not found:** refresh tags and reselect an installed model.
-- **Invalid JSON / repeated plans:** use a tool-capable instruct model, lower temperature, or simplify the request. Malformed actions are never executed.
-- **Slow first reply:** model loading is normal; try a smaller model. STOP cancels the request, but Ollama may keep the model loaded according to its own keep-alive policy.
-- **OCR unavailable:** install a Windows language pack with OCR support yourself. SSTD does not change language or system settings.
+Prompts, bounded observations and optional screenshots go to your loopback Ollama service. Ollama's own configuration/model provenance is outside SSTD's control. Do not configure a proxy that forwards local traffic elsewhere. No screenshots or clipboard contents are persisted by SSTD. Model inference can be slow; STOP cancels the HTTP stream, though Ollama may continue briefly releasing server resources.

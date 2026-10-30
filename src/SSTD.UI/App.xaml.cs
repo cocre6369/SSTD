@@ -66,6 +66,7 @@ public partial class App : System.Windows.Application
             if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "preferences");
             ApplyPreferences(_settings);
             if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "resolving-vm");
+            foreach (var t in new[] { typeof(SSTD.Automation.WindowsDesktop), typeof(SSTD.Automation.InputController), typeof(SSTD.Vision.WindowsVisualObserver), typeof(SSTD.Automation.DesktopBackend), typeof(SSTD.Automation.IActionServices), typeof(SSTD.Security.ISecurityEngine), typeof(SSTD.Automation.IActionExecutor), typeof(SSTD.Planner.AgentRunner) }) { if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "resolving " + t.Name); _services.GetRequiredService(t); }
             var vm = _services.GetRequiredService<MainViewModel>();
             if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "vm-resolved");
             _window = new MainWindow(vm); MainWindow = _window;

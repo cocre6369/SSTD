@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Automation;
+using System.Windows.Automation.Text;
 using SSTD.Core;
 using SSTD.Security;
 using SSTD.Vision;
@@ -13,7 +14,6 @@ namespace SSTD.Automation;
 public sealed class DesktopBackend(WindowsDesktop desktop, InputController input, ISecurityEngine security, Func<SstdSettings> settings, IVisualObserver vision, IActionServices services, WindowsVisualObserver visualObserver) : IDesktopBackend, IPolicyContext
 {
     private WindowSnapshot? _last;
-    private string? _lastFingerprint;
     private string? _draft;
     public SstdSettings Settings => settings();
     public async Task<WindowSnapshot> CurrentAsync(CancellationToken ct)

@@ -103,8 +103,8 @@ public sealed class InputController(WindowsDesktop desktop)
         "up" => 0x26, "down" => 0x28, "left" => 0x25, "right" => 0x27,
         "home" => 0x24, "end" => 0x23, "pageup" => 0x21, "pagedown" => 0x22,
         "backspace" => 0x08, "delete" => 0x2E, "insert" => 0x2D, "space" => 0x20,
-        >= "a" and <= "z" when key.Length == 1 => (ushort)(0x41 + key.ToLowerInvariant()[0] - 'a'),
-        >= "0" and <= "9" when key.Length == 1 => (ushort)key[0],
+        _ when key.Length == 1 && key[0] is >= 'a' and <= 'z' => (ushort)(0x41 + key.ToLowerInvariant()[0] - 'a'),
+        _ when key.Length == 1 && key[0] is >= '0' and <= '9' => (ushort)key[0],
         "." => 0xBE, "-" => 0xBD, "+" => 0xBB, "," => 0xBC, "/" => 0xBF, ";" => 0xBA,
         _ when key.Length >= 2 && key[0] is 'f' or 'F' && int.TryParse(key[1..], out var f) && f is >= 1 and <= 12 => (ushort)(0x6F + f),
         _ => throw new ArgumentException("Unregistered key.")

@@ -1,5 +1,8 @@
 name: Prepare Linux build SDK
-on: workflow_dispatch
+on:
+  push:
+    paths: ['.github/workflows/toolchain.yml']
+  workflow_dispatch:
 permissions: contents: read
 jobs:
   sdk:

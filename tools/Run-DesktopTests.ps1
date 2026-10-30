@@ -13,6 +13,14 @@ $acl=Get-Acl (Join-Path $Repository 'artifacts');$acl.AddAccessRule($rule);Set-A
 $repoAcl=Get-Acl $Repository;$repoAcl.AddAccessRule($rule);Set-Acl $Repository $repoAcl
 $inner=Join-Path $Repository 'artifacts/run-desktop-inner.ps1'
 @"
+`$env:USERPROFILE='C:\Users\$user'
+`$env:HOME=`$env:USERPROFILE
+`$env:APPDATA=Join-Path `$env:USERPROFILE 'AppData\Roaming'
+`$env:LOCALAPPDATA=Join-Path `$env:USERPROFILE 'AppData\Local'
+`$env:TEMP=Join-Path `$env:LOCALAPPDATA 'Temp'
+`$env:TMP=`$env:TEMP
+`$env:DOTNET_CLI_HOME=`$env:USERPROFILE
+New-Item -ItemType Directory -Force `$env:APPDATA,`$env:LOCALAPPDATA,`$env:TEMP | Out-Null
 Set-Location '$Repository'
 'STARTED' | Set-Content '$log'
 try { ./tools/Windows-Integration.ps1 *>> '$log'; `$code=`$LASTEXITCODE; if(-not `$code){`$code=0} } catch { `$_ | Out-String | Add-Content '$log'; `$code=1 }

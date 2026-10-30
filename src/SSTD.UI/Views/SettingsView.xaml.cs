@@ -22,7 +22,7 @@ public partial class SettingsView : System.Windows.Controls.UserControl
     {
         if (_vm is null) return; var s = _vm.Settings;
         s.Endpoint = Endpoint.Text.Trim(); s.Model = Model.SelectedItem as string ?? s.Model;
-        if (!double.TryParse(Temperature.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out var temp) || !int.TryParse(ContextSize.Text, out var context) || !int.TryParse(MaxTokens.Text, out var tokens) || !int.TryParse(Timeout.Text, out var timeout) || !int.TryParse(MaxSteps.Text, out var steps)) { ((App)System.Windows.Application.Current).SetError("Enter valid numeric values in AI and Automation settings."); return; }
+        if (!double.TryParse(Temperature.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out var temp) || !int.TryParse(ContextSize.Text, out var context) || !int.TryParse(MaxTokens.Text, out var tokens) || !int.TryParse(Timeout.Text, out var timeout) || !int.TryParse(MaxSteps.Text, out var steps)) { _vm.Error = "Enter valid numeric values in AI and Automation settings."; return; }
         s.Temperature = temp; s.ContextSize = context; s.MaxResponseTokens = tokens; s.AutomationTimeoutSeconds = timeout; s.MaxSteps = steps;
         s.DesktopControl = DesktopControl.IsChecked == true; s.UiAutomation = UiAutomation.IsChecked == true; s.VisualRecognition = VisualRecognition.IsChecked == true; s.SendScreenshotsToVisionModel = SendImages.IsChecked == true;
         s.ShowProgress = ShowProgress.IsChecked == true; s.Theme = Theme.SelectedIndex == 1 ? "Midnight" : "Charcoal"; s.Animations = Animations.IsChecked == true; s.Notifications = Notifications.IsChecked == true; s.SoundEffects = Sounds.IsChecked == true; s.SystemTray = Tray.IsChecked == true;

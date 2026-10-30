@@ -12,7 +12,7 @@ public partial class MainWindow : Window
     public MainWindow(MainViewModel vm)
     {
         InitializeComponent(); DataContext = vm; _vm = vm; vm.PropertyChanged += ViewModelChanged;
-        MessagesChanged(null); vm.Messages.CollectionChanged += (_, _) => MessagesChanged(true);
+        MessagesChanged(false); vm.Messages.CollectionChanged += (_, _) => MessagesChanged(true);
         Loaded += async (_, _) => { try { await vm.InitializeAsync(); ViewModelChanged(vm, new(nameof(MainViewModel.Page))); } catch (Exception ex) { vm.Error = SSTD.Core.SensitiveData.SafeError(ex); } };
         Closing += MainWindow_Closing;
     }

@@ -72,8 +72,8 @@ public partial class App : System.Windows.Application
     public void ApplyPreferences(SstdSettings settings)
     {
         // Mutate shared brushes so existing StaticResource consumers update immediately.
-        ((SolidColorBrush)Resources["Background"]).Color = (Color)ColorConverter.ConvertFromString(settings.Theme == "Midnight" ? "#070B12" : "#0B0F14")!;
-        ((SolidColorBrush)Resources["Sidebar"]).Color = (Color)ColorConverter.ConvertFromString(settings.Theme == "Midnight" ? "#0B101B" : "#0E131B")!;
+        ((SolidColorBrush)Resources["Background"]).Color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(settings.Theme == "Midnight" ? "#070B12" : "#0B0F14")!;
+        ((SolidColorBrush)Resources["Sidebar"]).Color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(settings.Theme == "Midnight" ? "#0B101B" : "#0E131B")!;
         if (_tray is not null) _tray.Visible = settings.SystemTray;
     }
     private void CreateTray()
@@ -99,11 +99,13 @@ public partial class App : System.Windows.Application
         try
         {
             await _services!.GetRequiredService<MainViewModel>().InitializeAsync();
-            await Dispatcher.InvokeAsync(() => { _window!.UpdateLayout(); }, System.Windows.Threading.DispatcherPriority.Loaded);
-            var security = _services.GetRequiredService<ISecurityEngine>();
+            await Dispatcher.InvokeAsync(() => { window.UpdateLayout(); }, System.Windows.Threading.DispatcherPriority.Loaded);
+            var services = _services ?? throw new InvalidOperationException("Services were not initialized.");
+            var window = _window ?? throw new InvalidOperationException("Window was not initialized.");
+            var security = services.GetRequiredService<ISecurityEngine>();
             var action = new AgentAction("OpenApplication", new Dictionary<string, System.Text.Json.JsonElement> { ["name"] = System.Text.Json.JsonSerializer.SerializeToElement("cmd.exe") });
             if ((await security.AuthorizeAsync(action, CancellationToken.None)).Allowed) throw new InvalidOperationException("Safety self-check failed.");
-            if (_window.ActualWidth < 800 || _services.GetRequiredService<MainViewModel>().SendCommand is null) throw new InvalidOperationException("UI self-check failed.");
+            if (window.ActualWidth < 800 || _services.GetRequiredService<MainViewModel>().SendCommand is null) throw new InvalidOperationException("UI self-check failed.");
             await File.WriteAllTextAsync(output, $"PASS: WPF dashboard constructed; DI resolved; SQLite initialized; Ollama availability handled; independent CMD policy rejection passed.\nVersion: {typeof(App).Assembly.GetName().Version}\nInteractive external-app/Ollama inference tests are separate.\n");
             Shutdown(0);
         }

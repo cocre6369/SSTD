@@ -9,12 +9,12 @@ public sealed class ApprovalBroker : IApprovalBroker
     {
         var app = System.Windows.Application.Current;
         if (app is null) return Task.FromResult(false);
-        return app.Dispatcher.InvokeAsync(async () =>
+        return app.Dispatcher.InvokeAsync(() =>
         {
             var dialog = new ApprovalWindow(request) { Owner = app.MainWindow };
             using var cancellation = ct.Register(() => dialog.Dispatcher.Invoke(() => { dialog.Cancelled = true; dialog.Close(); }));
             dialog.ShowDialog();
             return !ct.IsCancellationRequested && dialog.DialogResult == true;
-        }).Task.Unwrap();
+        }).Task;
     }
 }

@@ -23,7 +23,7 @@ public partial class App : System.Windows.Application
     private bool _ownsMutex;
     private MainWindow? _window;
     public bool SmokeMode { get; private set; }
-    private static string SmokeDirectory => Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory;
+    private static string SmokeDirectory => Environment.GetEnvironmentVariable("SSTD_SMOKE_DIR") ?? Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory;
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);

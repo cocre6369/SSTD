@@ -98,6 +98,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: ./tools/Publish-CiLog.ps1 -Path artifacts/smoke-error.txt
+      - name: Preserve executable stderr stream
+        if: always()
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./tools/Publish-CiLog.ps1 -Path artifacts/smoke-stderr.txt
       - name: Preserve executable smoke stage
         if: always()
         shell: pwsh

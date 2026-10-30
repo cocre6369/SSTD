@@ -33,6 +33,7 @@ internal static class Native
     [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)] public static extern bool QueryFullProcessImageNameW(nint h, uint flags, StringBuilder name, ref uint size);
     [DllImport("advapi32.dll", SetLastError = true)] public static extern bool OpenProcessToken(nint process, uint access, out nint token);
     [DllImport("advapi32.dll", SetLastError = true)] public static extern bool GetTokenInformation(nint token, int cls, out uint info, uint length, out uint returnLength);
+    [DllImport("advapi32.dll", SetLastError = true)] public static extern bool GetTokenInformation(nint token, int cls, nint info, uint length, out uint returnLength);
     [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
     [DllImport("user32.dll")] public static extern bool AttachThreadInput(uint from, uint to, bool attach);
     [DllImport("user32.dll")] public static extern nint GetFocus();
@@ -56,7 +57,26 @@ internal static class Native
         try
         {
             if (!OpenProcessToken(h, 0x0008, out var token)) return null;
-            try { return GetTokenInformation(token, 20, out var elevation, 4, out _) ? elevation != 0 : null; }
+            try
+            {
+                // Effective elevation is high/system integrity. A filtered/SAFER medium token is not elevated.
+                GetTokenInformation(token, 25, IntPtr.Zero, 0, out var size);
+                if (size > 0 && size <= 256)
+                {
+                    var buffer = Marshal.AllocHGlobal(size);
+                    try
+                    {
+                        if (GetTokenInformation(token, 25, buffer, size, out _))
+                        {
+                            var sid = Marshal.ReadIntPtr(buffer); var count = Marshal.ReadByte(sid, 1);
+                            var rid = Marshal.ReadInt32(sid, 8 + 4 * (count - 1));
+                            return rid >= 0x3000;
+                        }
+                    }
+                    finally { Marshal.FreeHGlobal(buffer); }
+                }
+                return GetTokenInformation(token, 20, out var elevation, 4, out _) ? elevation != 0 : null;
+            }
             finally { CloseHandle(token); }
         }
         finally { CloseHandle(h); }

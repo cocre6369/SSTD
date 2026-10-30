@@ -86,6 +86,12 @@ jobs:
       - name: Executable startup smoke test
         shell: pwsh
         run: ./tools/Smoke.ps1 -Exe artifacts/publish/SSTD.exe
+      - name: Preserve executable smoke diagnostic
+        if: always()
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./tools/Publish-CiLog.ps1 -Path artifacts/smoke-result.txt
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y
       - name: Build installer

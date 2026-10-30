@@ -1,0 +1,36 @@
+name: Transfer verified installer
+on:
+  push:
+    branches: [arena/6dc16062-sstd]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 41058600970
+          name: SSTD-windows-x64
+          path: transfer
+      - name: Locate installer
+        shell: bash
+        run: find transfer -maxdepth 4 -type f | head -20
+      - name: Publish installer blobs
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $setup = Get-ChildItem transfer -Recurse -Filter SSTD-Setup.exe | Select-Object -First 1
+          $sums = Get-ChildItem transfer -Recurse -Filter SHA256SUMS.txt | Select-Object -First 1
+          if (-not $setup) { throw 'Installer not found in artifact.' }
+          ./tools/Publish-ArtifactBlobs.ps1 -Path $setup.FullName -Label SSTD-Setup.exe -Manifest artifacts/artifact-blobs.txt
+          if ($sums) { ./tools/Publish-ArtifactBlobs.ps1 -Path $sums.FullName -Label SHA256SUMS.txt -Manifest artifacts/artifact-blobs.txt }
+      - name: Publish blob manifest
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./tools/Publish-CiLog.ps1 -Path artifacts/artifact-blobs.txt

@@ -24,6 +24,8 @@ jobs:
       - name: Preserve build diagnostic
         if: failure()
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: ./tools/Publish-CiLog.ps1 -Path artifacts/build.log
       - name: Independent security and unit tests
         shell: pwsh
@@ -31,6 +33,8 @@ jobs:
       - name: Preserve unit test diagnostic
         if: failure()
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: ./tools/Publish-CiLog.ps1 -Path artifacts/unit.log
       - name: Real Windows UI Automation tests
         shell: pwsh

@@ -16,6 +16,8 @@ jobs:
       - name: Preserve test diagnostic
         if: failure()
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: ./tools/Publish-CiLog.ps1 -Path artifacts/portable.log
       - uses: actions/upload-artifact@v4
         if: always()

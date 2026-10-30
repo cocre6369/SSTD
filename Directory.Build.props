@@ -12,4 +12,5 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
+  <ItemGroup><Using Include="System.IO" /></ItemGroup>
 </Project>

@@ -38,8 +38,11 @@ public partial class App : System.Windows.Application
         };
         try
         {
+            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "smoke-stage.txt"), "startup");
             var store = new LocalStore(SmokeMode ? Path.Combine(Path.GetTempPath(), "SSTD-smoke-" + Guid.NewGuid().ToString("N")) : null);
+            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "smoke-stage.txt"), "store-created");
             _settings = await store.LoadAsync(CancellationToken.None);
+            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "smoke-stage.txt"), "settings-loaded");
             var client = new OllamaClient(new Uri(_settings.Endpoint));
             var collection = new ServiceCollection();
             collection.AddSingleton(store); collection.AddSingleton<ISettingsStore>(store); collection.AddSingleton<ITaskStore>(store); collection.AddSingleton<IConversationStore>(store);

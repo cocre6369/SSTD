@@ -198,7 +198,7 @@ public sealed class DesktopBackend(WindowsDesktop desktop, InputController input
             var entry = zip.GetEntry("word/document.xml") ?? throw new IOException("Document content part was missing.");
             using var part = entry.Open(); var xml = System.Xml.Linq.XDocument.Load(part);
             var actual = string.Join("\n", xml.Descendants("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p").Select(p => string.Concat(p.Descendants("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t").Select(t => t.Value))));
-            var expected = string.Join("\n", a.Str("content").Replace("\r\n", "\n").Split('\n').Select(line => line.StartsWith("# ", StringComparison.Ordinal) ? line[2..] : line));
+            var expected = string.Join("\n", a.Str("content").Replace("\r\n", "\n").Split('\n').Select(line => System.Text.RegularExpressions.Regex.Replace(line, @"^(?:#{1,6}\s+|[-*]\s+)", "")));
             verified = actual == expected;
         }
         return new(true, verified, verified ? "Created and read back the new document: " + a.Str("path") : "Document creation could not be verified.");

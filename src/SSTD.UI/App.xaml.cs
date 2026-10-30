@@ -98,10 +98,10 @@ public partial class App : System.Windows.Application
         var output = Path.Combine(AppContext.BaseDirectory, "smoke-result.txt");
         try
         {
-            await _services!.GetRequiredService<MainViewModel>().InitializeAsync();
-            await Dispatcher.InvokeAsync(() => { window.UpdateLayout(); }, System.Windows.Threading.DispatcherPriority.Loaded);
             var services = _services ?? throw new InvalidOperationException("Services were not initialized.");
             var window = _window ?? throw new InvalidOperationException("Window was not initialized.");
+            await services.GetRequiredService<MainViewModel>().InitializeAsync();
+            await Dispatcher.InvokeAsync(() => { window.UpdateLayout(); }, System.Windows.Threading.DispatcherPriority.Loaded);
             var security = services.GetRequiredService<ISecurityEngine>();
             var action = new AgentAction("OpenApplication", new Dictionary<string, System.Text.Json.JsonElement> { ["name"] = System.Text.Json.JsonSerializer.SerializeToElement("cmd.exe") });
             if ((await security.AuthorizeAsync(action, CancellationToken.None)).Allowed) throw new InvalidOperationException("Safety self-check failed.");

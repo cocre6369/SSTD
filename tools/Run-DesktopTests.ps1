@@ -8,6 +8,8 @@ $password='Sstd!'+[guid]::NewGuid().ToString('N')+'Aa1'
 $secure=ConvertTo-SecureString $password -AsPlainText -Force
 if(Get-LocalUser -Name $user -ErrorAction SilentlyContinue){Remove-LocalUser -Name $user}
 New-LocalUser -Name $user -Password $secure -AccountNeverExpires -PasswordNeverExpires:$false -ErrorAction Stop | Out-Null
+$rule=New-Object System.Security.AccessControl.FileSystemAccessRule($user,'Modify','ContainerInherit,ObjectInherit','None','Allow')
+$acl=Get-Acl (Join-Path $Repository 'artifacts');$acl.AddAccessRule($rule);Set-Acl (Join-Path $Repository 'artifacts') $acl
 # The CI runner is elevated; create a normal local standard user so the product's elevation refusal is exercised honestly.
 $command="Set-Location '$Repository'; try { ./tools/Windows-Integration.ps1 *> '$log'; `$code=`$LASTEXITCODE; if(-not `$code){`$code=0} } catch { `$_ | Out-String | Add-Content '$log'; `$code=1 }; Set-Content '$result' `$code; exit `$code"
 $pwsh=(Get-Command pwsh).Source

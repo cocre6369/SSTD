@@ -29,10 +29,38 @@ public struct TOKEN_MANDATORY_LABEL { public System.IntPtr Label; public uint At
 [System.Runtime.InteropServices.DllImport("kernel32.dll")] public static extern bool GetExitCodeProcess(System.IntPtr h,out uint code);
 [System.Runtime.InteropServices.DllImport("kernel32.dll")] public static extern bool CloseHandle(System.IntPtr h);
 [System.Runtime.InteropServices.DllImport("kernel32.dll")] public static extern bool TerminateProcess(System.IntPtr h,uint code);
+[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+public struct TRUSTEE { public System.IntPtr MultipleTrustee; public int MultipleTrusteeOperation; public int TrusteeForm; public int TrusteeType; public System.IntPtr Name; }
+[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+public struct EXPLICIT_ACCESS { public uint Access; public int Mode; public int Inheritance; public TRUSTEE Trustee; }
+[System.Runtime.InteropServices.DllImport("user32.dll")] public static extern System.IntPtr GetProcessWindowStation();
+[System.Runtime.InteropServices.DllImport("user32.dll")] public static extern System.IntPtr GetThreadDesktop(int thread);
+[System.Runtime.InteropServices.DllImport("kernel32.dll")] public static extern int GetCurrentThreadId();
+[System.Runtime.InteropServices.DllImport("advapi32.dll",SetLastError=true)] public static extern uint GetSecurityInfo(System.IntPtr h,int type,uint info,out System.IntPtr owner,out System.IntPtr group,out System.IntPtr dacl,out System.IntPtr sacl,out System.IntPtr sd);
+[System.Runtime.InteropServices.DllImport("advapi32.dll",SetLastError=true)] public static extern uint SetEntriesInAcl(int count,ref EXPLICIT_ACCESS entry,System.IntPtr oldAcl,out System.IntPtr newAcl);
+[System.Runtime.InteropServices.DllImport("advapi32.dll",SetLastError=true)] public static extern uint SetSecurityInfo(System.IntPtr h,int type,uint info,System.IntPtr owner,System.IntPtr group,System.IntPtr dacl,System.IntPtr sacl);
+[System.Runtime.InteropServices.DllImport("advapi32.dll",SetLastError=true)] public static extern bool GetTokenInformation(System.IntPtr token,int cls,System.IntPtr info,uint length,out uint returned);
+
 '@
 $token=[IntPtr]::Zero;$restricted=[IntPtr]::Zero;$sid=[IntPtr]::Zero
 try {
   if(-not [CiToken.Native]::OpenProcessToken([CiToken.Native]::GetCurrentProcess(),0x000F01FF,[ref]$token)){throw 'OpenProcessToken failed.'}
+  # Grant the same user's SID access to the CI window station/desktop after the admin SID is removed.
+  [uint32]$size=0;[void][CiToken.Native]::GetTokenInformation($token,1,[IntPtr]::Zero,0,[ref]$size)
+  $userBuf=[Runtime.InteropServices.Marshal]::AllocHGlobal([int]$size)
+  try{
+    if(-not [CiToken.Native]::GetTokenInformation($token,1,$userBuf,$size,[ref]$size)){throw 'TokenUser query failed.'}
+    $userSid=[Runtime.InteropServices.Marshal]::ReadIntPtr($userBuf)
+    foreach($handle in @([CiToken.Native]::GetProcessWindowStation(),[CiToken.Native]::GetThreadDesktop([CiToken.Native]::GetCurrentThreadId()))){
+      [IntPtr]$owner=0;[IntPtr]$group=0;[IntPtr]$dacl=0;[IntPtr]$sacl=0;[IntPtr]$sd=0
+      if([CiToken.Native]::GetSecurityInfo($handle,3,4,[ref]$owner,[ref]$group,[ref]$dacl,[ref]$sacl,[ref]$sd) -ne 0){throw 'GetSecurityInfo failed.'}
+      $ea=[CiToken.Native+EXPLICIT_ACCESS]::new();$ea.Access=0x000F01FF;$ea.Mode=1;$ea.Inheritance=0;$ea.Trustee=[CiToken.Native+TRUSTEE]::new();$ea.Trustee.TrusteeForm=0;$ea.Trustee.TrusteeType=1;$ea.Trustee.Name=$userSid
+      [IntPtr]$newAcl=0
+      if([CiToken.Native]::SetEntriesInAcl(1,[ref]$ea,$dacl,[ref]$newAcl) -ne 0){throw 'SetEntriesInAcl failed.'}
+      if([CiToken.Native]::SetSecurityInfo($handle,3,4,[IntPtr]::Zero,[IntPtr]::Zero,$newAcl,[IntPtr]::Zero) -ne 0){throw 'SetSecurityInfo failed.'}
+    }
+  }finally{[Runtime.InteropServices.Marshal]::FreeHGlobal($userBuf)}
+
   # LUA_TOKEN removes the admin SID; then explicitly set medium integrity.
   if(-not [CiToken.Native]::CreateRestrictedToken($token,4,0,[IntPtr]::Zero,0,[IntPtr]::Zero,0,[IntPtr]::Zero,[ref]$restricted)){throw 'CreateRestrictedToken failed.'}
   $bytes=New-Object byte[] 12; $bytes[0]=1;$bytes[1]=1;$bytes[7]=16;[BitConverter]::GetBytes([uint32]0x2000).CopyTo($bytes,8)

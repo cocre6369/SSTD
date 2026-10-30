@@ -52,9 +52,8 @@ public class GuardedBackendTests
             var clicked=await executor.ExecuteAsync(A("ClickElement",new{elementId=button.Id}),CancellationToken.None);
             Assert.True(clicked.Success);Assert.Contains(clicked.Observation!.Elements,e=>e.Name=="Applied successfully");
             var found=await executor.ExecuteAsync(A("FindElement",new{name="Minecraft launcher",elementId=typed.Observation.Elements.First(e=>e.CanScroll&&e.AutomationId=="library").Id,maxScrolls=12}),CancellationToken.None);
-            // Small UIA scroll increments can require more than 12 pages; failure must remain explicit.
-            if(found.Success)Assert.Contains(found.Observation!.Elements,e=>e.Name=="Minecraft launcher"&&!e.Offscreen);
-            else Assert.Contains("not found",found.Message,StringComparison.OrdinalIgnoreCase);
+            Assert.True(found.Success, found.Message);
+            Assert.Contains(found.Observation!.Elements,e=>e.Name=="Minecraft launcher"&&!e.Offscreen);
         }
         finally {if(!p.HasExited)p.Kill();}
     }

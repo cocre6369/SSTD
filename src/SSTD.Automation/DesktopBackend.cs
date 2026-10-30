@@ -174,7 +174,7 @@ public sealed class DesktopBackend(WindowsDesktop desktop, InputController input
         {
             ct.ThrowIfCancellationRequested();
             var before = Fingerprint(w); if (!previous.Add(before)) return ActionResult.Fail("Scrolling reached a stable boundary without finding the item.");
-            var scroll = new AgentAction("Scroll", new Dictionary<string, JsonElement> { ["elementId"] = JsonSerializer.SerializeToElement(container.Id), ["direction"] = JsonSerializer.SerializeToElement("down"), ["amount"] = JsonSerializer.SerializeToElement(1) });
+            var scroll = new AgentAction("Scroll", new Dictionary<string, JsonElement> { ["elementId"] = JsonSerializer.SerializeToElement(container.Id), ["direction"] = JsonSerializer.SerializeToElement("down"), ["amount"] = JsonSerializer.SerializeToElement(2) });
             // Re-enter the guarded backend so every scroll receives a fresh policy decision.
             var step = await ExecuteAuthorizedAsync(scroll, new SecurityDecision(true, "Bounded search scroll"), ct).ConfigureAwait(false);
             if (!step.Success) return step;

@@ -84,8 +84,8 @@ public sealed class InputController(WindowsDesktop desktop)
             for (var i = 0; i < amount; i++)
             {
                 ct.ThrowIfCancellationRequested(); EnsureTarget(target, ct);
-                scroll.Scroll(horizontal ? positive ? ScrollAmount.SmallIncrement : ScrollAmount.SmallDecrement : ScrollAmount.NoAmount,
-                    horizontal ? ScrollAmount.NoAmount : positive ? ScrollAmount.SmallIncrement : ScrollAmount.SmallDecrement);
+                scroll.Scroll(horizontal ? positive ? ScrollAmount.LargeIncrement : ScrollAmount.LargeDecrement : ScrollAmount.NoAmount,
+                    horizontal ? ScrollAmount.NoAmount : positive ? ScrollAmount.LargeIncrement : ScrollAmount.LargeDecrement);
             }
             return;
         }

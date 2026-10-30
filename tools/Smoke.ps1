@@ -16,4 +16,5 @@ New-Item -ItemType Directory -Force "$PSScriptRoot/../artifacts" | Out-Null
 if (Test-Path "$dir/smoke-result.txt") { Copy-Item "$dir/smoke-result.txt" "$PSScriptRoot/../artifacts/smoke-result.txt" -Force }
 if (Test-Path "$dir/smoke-error.txt") { Copy-Item "$dir/smoke-error.txt" "$PSScriptRoot/../artifacts/smoke-error.txt" -Force }
 if (Test-Path "$dir/smoke-stdout.txt") { Copy-Item "$dir/smoke-stdout.txt" "$PSScriptRoot/../artifacts/smoke-stdout.txt" -Force }
+if (Test-Path "$dir/smoke-stage.txt") { Copy-Item "$dir/smoke-stage.txt" "$PSScriptRoot/../artifacts/smoke-stage.txt" -Force }
 if ($p.ExitCode -ne 0 -or $result -notmatch '^PASS:') { throw "Executable smoke test failed (exit $($p.ExitCode))." }

@@ -5,7 +5,7 @@ $log=Join-Path $Repository 'artifacts/desktop-task.log'
 Remove-Item $result,$log -ErrorAction SilentlyContinue
 $command="Set-Location '$Repository'; try { ./tools/Windows-Integration.ps1 *> '$log'; `$code=`$LASTEXITCODE; if(-not `$code){`$code=0} } catch { `$_ | Out-String | Add-Content '$log'; `$code=1 }; Set-Content '$result' `$code; exit `$code"
 $pwsh=(Get-Command pwsh).Source
-$cmdline='"'+$pwsh+'" -NoProfile -ExecutionPolicy Bypass -Command "'+$command.Replace('"','\"')+'"'
+$cmdline='-NoProfile -ExecutionPolicy Bypass -Command "'+$command.Replace('"','\"')+'"'
 Add-Type -Namespace CiToken -Name Native -MemberDefinition @'
 [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
 public struct STARTUPINFO { public int cb; public string desktop; public string title; public int x,y,xSize,ySize,xCountChars,yCountChars,fillAttribute,flags; public short showWindow,cbReserved2; public System.IntPtr cbReserved2Ptr,hStdInput,hStdOutput,hStdError; }
@@ -33,7 +33,7 @@ try {
   if(-not [CiToken.Native]::SetTokenInformation($restricted,25,[ref]$label,[uint32][Runtime.InteropServices.Marshal]::SizeOf($label))){throw 'SetTokenInformation integrity failed.'}
   $si=[CiToken.Native+STARTUPINFO]::new();$si.cb=[Runtime.InteropServices.Marshal]::SizeOf($si);$si.desktop='WinSta0\Default'
   $pi=[CiToken.Native+PROCESS_INFORMATION]::new()
-  if(-not [CiToken.Native]::CreateProcessWithTokenW($restricted,1,$null,$cmdline,0x400,[IntPtr]::Zero,$Repository,[ref]$si,[ref]$pi)){throw "CreateProcessWithTokenW failed: $([Runtime.InteropServices.Marshal]::GetLastWin32Error())"}
+  if(-not [CiToken.Native]::CreateProcessWithTokenW($restricted,1,$pwsh,$cmdline,0x400,[IntPtr]::Zero,$Repository,[ref]$si,[ref]$pi)){throw "CreateProcessWithTokenW failed: $([Runtime.InteropServices.Marshal]::GetLastWin32Error())"}
   try{
     [void][CiToken.Native]::WaitForSingleObject($pi.process,240000)
     [uint32]$code=0;[void][CiToken.Native]::GetExitCodeProcess($pi.process,[ref]$code)

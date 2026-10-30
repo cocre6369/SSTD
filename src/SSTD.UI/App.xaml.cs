@@ -23,6 +23,7 @@ public partial class App : System.Windows.Application
     private bool _ownsMutex;
     private MainWindow? _window;
     public bool SmokeMode { get; private set; }
+    private static string SmokeDirectory => Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory;
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -38,11 +39,11 @@ public partial class App : System.Windows.Application
         };
         try
         {
-            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "smoke-stage.txt"), "startup");
+            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "startup");
             var store = new LocalStore(SmokeMode ? Path.Combine(Path.GetTempPath(), "SSTD-smoke-" + Guid.NewGuid().ToString("N")) : null);
-            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "smoke-stage.txt"), "store-created");
+            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "store-created");
             _settings = await store.LoadAsync(CancellationToken.None);
-            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "smoke-stage.txt"), "settings-loaded");
+            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "settings-loaded");
             var client = new OllamaClient(new Uri(_settings.Endpoint));
             var collection = new ServiceCollection();
             collection.AddSingleton(store); collection.AddSingleton<ISettingsStore>(store); collection.AddSingleton<ITaskStore>(store); collection.AddSingleton<IConversationStore>(store);
@@ -61,18 +62,18 @@ public partial class App : System.Windows.Application
             collection.AddSingleton<AgentRunner>();
             collection.AddSingleton<MainViewModel>();
             _services = collection.BuildServiceProvider();
-            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "smoke-stage.txt"), "services-built");
+            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "services-built");
             ApplyPreferences(_settings);
             _window = new MainWindow(_services.GetRequiredService<MainViewModel>()); MainWindow = _window;
-            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "smoke-stage.txt"), "window-constructed");
+            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "window-constructed");
             CreateTray();
-            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "smoke-stage.txt"), "tray-created");
+            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "tray-created");
             _window.Show();
-            if (SmokeMode) { await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "smoke-stage.txt"), "window-shown"); await RunSmokeAsync(); }
+            if (SmokeMode) { await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "window-shown"); await RunSmokeAsync(); }
         }
         catch (Exception ex)
         {
-            if (SmokeMode) { await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "smoke-error.txt"), SensitiveData.SafeError(ex)); Shutdown(2); }
+            if (SmokeMode) { await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-error.txt"), SensitiveData.SafeError(ex)); Shutdown(2); }
             else System.Windows.MessageBox.Show("SSTD could not start:\n" + SensitiveData.SafeError(ex), "SSTD startup error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -102,14 +103,14 @@ public partial class App : System.Windows.Application
     }
     private async Task RunSmokeAsync()
     {
-        var output = Path.Combine(AppContext.BaseDirectory, "smoke-result.txt");
+        var output = Path.Combine(SmokeDirectory, "smoke-result.txt");
         try
         {
             var services = _services ?? throw new InvalidOperationException("Services were not initialized.");
             var window = _window ?? throw new InvalidOperationException("Window was not initialized.");
-            await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "smoke-stage.txt"), "initializing");
+            await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "initializing");
             await services.GetRequiredService<MainViewModel>().InitializeAsync();
-            await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "smoke-stage.txt"), "initialized");
+            await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "initialized");
             window.UpdateLayout();
             var security = services.GetRequiredService<ISecurityEngine>();
             var action = new AgentAction("OpenApplication", new Dictionary<string, System.Text.Json.JsonElement> { ["name"] = System.Text.Json.JsonSerializer.SerializeToElement("cmd.exe") });

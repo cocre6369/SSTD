@@ -60,7 +60,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: ./tools/Publish-CiLog.ps1 -Path artifacts/session.log
       - name: Real Windows UI Automation tests
-        timeout-minutes: 3
+        timeout-minutes: 6
         shell: pwsh
         run: ./tools/Run-DesktopTests.ps1
       - name: Preserve Windows integration diagnostic

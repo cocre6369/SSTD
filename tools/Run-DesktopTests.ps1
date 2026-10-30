@@ -3,9 +3,16 @@ $ErrorActionPreference='Stop'
 $result=Join-Path $Repository 'artifacts/desktop-test-exit.txt'
 $log=Join-Path $Repository 'artifacts/desktop-task.log'
 Remove-Item $result,$log -ErrorAction SilentlyContinue
-$command="Set-Location '$Repository'; try { ./tools/Windows-Integration.ps1 *> '$log'; `$code=`$LASTEXITCODE; if(-not `$code){`$code=0} } catch { `$_ | Out-String | Add-Content '$log'; `$code=1 }; Set-Content '$result' `$code; exit `$code"
+$inner=Join-Path $Repository 'artifacts/run-desktop-inner.ps1'
+@"
+Set-Location '$Repository'
+'STARTED' | Set-Content '$log'
+try { ./tools/Windows-Integration.ps1 *>> '$log'; `$code=`$LASTEXITCODE; if(-not `$code){`$code=0} } catch { `$_ | Out-String | Add-Content '$log'; `$code=1 }
+Set-Content '$result' `$code
+exit `$code
+"@ | Set-Content $inner
 $pwsh=(Get-Command pwsh).Source
-$cmdline='-NoProfile -ExecutionPolicy Bypass -Command "'+$command.Replace('"','\"')+'"'
+$cmdline='-NoProfile -ExecutionPolicy Bypass -File "'+$inner+'"'
 Add-Type -Namespace CiToken -Name Native -MemberDefinition @'
 [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
 public struct STARTUPINFO { public int cb; public string desktop; public string title; public int x,y,xSize,ySize,xCountChars,yCountChars,fillAttribute,flags; public short showWindow,cbReserved2; public System.IntPtr cbReserved2Ptr,hStdInput,hStdOutput,hStdError; }

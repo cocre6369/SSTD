@@ -63,10 +63,10 @@ internal static class Native
                 GetTokenInformation(token, 25, IntPtr.Zero, 0, out var size);
                 if (size > 0 && size <= 256)
                 {
-                    var buffer = Marshal.AllocHGlobal(size);
+                    var buffer = Marshal.AllocHGlobal((int)size);
                     try
                     {
-                        if (GetTokenInformation(token, 25, buffer, size, out _))
+                        if (GetTokenInformation(token, 25, buffer, (uint)size, out _))
                         {
                             var sid = Marshal.ReadIntPtr(buffer); var count = Marshal.ReadByte(sid, 1);
                             var rid = Marshal.ReadInt32(sid, 8 + 4 * (count - 1));

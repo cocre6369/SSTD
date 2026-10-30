@@ -42,6 +42,12 @@ jobs:
       - name: Real Windows UI Automation tests
         shell: pwsh
         run: ./tools/Windows-Integration.ps1
+      - name: Preserve Windows integration diagnostic
+        if: always()
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./tools/Publish-CiLog.ps1 -Path artifacts/windows.log
       - name: Publish self-contained executable
         run: dotnet publish src/SSTD.UI/SSTD.UI.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o artifacts/publish
       - name: Executable startup smoke test
@@ -68,6 +74,7 @@ jobs:
             artifacts/restore.log
             artifacts/build.log
             artifacts/test-results/
+            artifacts/windows.log
             artifacts/smoke-result.txt
             artifacts/installer-smoke.txt
           if-no-files-found: warn

@@ -1,7 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
-  <PropertyGroup><UseWPF>true</UseWPF><UseWindowsForms>true</UseWindowsForms><OutputType>WinExe</OutputType><ApplicationManifest>app.manifest</ApplicationManifest><ApplicationIcon>..\..\assets\SSTD.ico</ApplicationIcon><AssemblyName>SSTD</AssemblyName><RootNamespace>SSTD.UI</RootNamespace><PublishTrimmed>false</PublishTrimmed></PropertyGroup>
-  </PropertyGroup>
+  <PropertyGroup><TargetFramework>net8.0-windows10.0.19041.0</TargetFramework><UseWPF>true</UseWPF><UseWindowsForms>true</UseWindowsForms><OutputType>WinExe</OutputType><ApplicationManifest>app.manifest</ApplicationManifest><ApplicationIcon>..\..\assets\SSTD.ico</ApplicationIcon><AssemblyName>SSTD</AssemblyName><RootNamespace>SSTD.UI</RootNamespace><PublishTrimmed>false</PublishTrimmed></PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />

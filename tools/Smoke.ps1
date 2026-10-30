@@ -16,7 +16,17 @@ $p = [System.Diagnostics.Process]::Start($psi)
 $stdout=$p.StandardOutput.ReadToEndAsync(); $stderr=$p.StandardError.ReadToEndAsync()
 $exited = $p.WaitForExit(60000)
 "wait exited=$exited hasExited=$($p.HasExited)" | Add-Content $log
-if (-not $exited) { $p.Kill(); $p.WaitForExit(); "killed" | Add-Content $log }
+if (-not $exited) {
+  try { "mainwindow=$($p.MainWindowTitle)" | Add-Content $log } catch {}
+  try {
+    Add-Type -AssemblyName UIAutomationClient
+    $root=[System.Windows.Automation.AutomationElement]::RootElement
+    $cond=New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ProcessIdProperty,$p.Id)
+    $wins=$root.FindAll([System.Windows.Automation.TreeScope]::Children,$cond)
+    foreach($w in $wins){ "window=$($w.Current.Name) class=$($w.Current.ClassName)" | Add-Content $log }
+  } catch { "uia-error=$($_.Exception.Message)" | Add-Content $log }
+  $p.Kill(); $p.WaitForExit(); "killed" | Add-Content $log
+}
 try { $stdout.Result | Set-Content "$dir/smoke-stdout.txt" } catch {}
 try { $stderr.Result | Set-Content "$dir/smoke-error.txt" } catch {}
 "exitcode=$($p.ExitCode)" | Add-Content $log

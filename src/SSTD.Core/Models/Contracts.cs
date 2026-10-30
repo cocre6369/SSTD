@@ -45,7 +45,7 @@ public sealed record WindowSnapshot
     public string? FocusedElementId { get; init; }
     public IReadOnlyList<UiElement> Elements { get; init; } = [];
     public IReadOnlyList<string> Warnings { get; init; } = [];
-    public string? ScreenshotBase64 { get; init; }
+    [JsonIgnore] public string? ScreenshotBase64 { get; init; }
     public DateTimeOffset CapturedAt { get; init; } = DateTimeOffset.UtcNow;
     [JsonIgnore] public nint Handle => nint.TryParse(WindowId, out var h) ? h : 0;
     public UiElement? Find(string id) => Elements.FirstOrDefault(e => e.Id == id);

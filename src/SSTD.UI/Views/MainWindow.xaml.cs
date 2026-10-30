@@ -23,6 +23,11 @@ public partial class MainWindow : Window
             WorkspacePage.Visibility = _vm.Page == "Workspace" ? Visibility.Visible : Visibility.Collapsed;
             SettingsPage.Visibility = _vm.Page == "Settings" ? Visibility.Visible : Visibility.Collapsed;
             HistoryPage.Visibility = _vm.Page == "History" ? Visibility.Visible : Visibility.Collapsed;
+            if (_vm.Settings.Animations)
+            {
+                var visible = _vm.Page == "Settings" ? (System.Windows.UIElement)SettingsPage : _vm.Page == "History" ? HistoryPage : WorkspacePage;
+                visible.BeginAnimation(OpacityProperty, new System.Windows.Media.Animation.DoubleAnimation(0.65, 1, TimeSpan.FromMilliseconds(160)));
+            }
         }
         if (e.PropertyName == nameof(MainViewModel.HasMessages)) MessagesChanged(false);
         if (e.PropertyName == nameof(MainViewModel.Busy) && _vm is not null && !_vm.Busy) ((App)System.Windows.Application.Current).NotifyTaskFinished(_vm.AutomationState);

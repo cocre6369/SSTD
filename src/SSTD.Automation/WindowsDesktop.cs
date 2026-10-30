@@ -64,6 +64,10 @@ public sealed class WindowsDesktop : IWindowsSnapshotProvider, IApplicationResol
         try
         {
             var root = AutomationElement.FromHandle(h);
+            // Search the entire tree for the UIA password bit, not just the first bounded observation page.
+            var protectedFields = root.FindAll(TreeScope.Descendants, new PropertyCondition(AutomationElement.IsPasswordProperty, true));
+            if (protectedFields.Count > 0)
+                return snapshot with { IsPasswordContext = true, Elements = [], Warnings = [.. warnings, "Credential field detected. Observation stopped before exposing its content."] };
             var focus = AutomationElement.FocusedElement;
             var queue = new Queue<(AutomationElement Element, int Depth)>(); queue.Enqueue((root, 0));
             var limit = Math.Min(350, 350);

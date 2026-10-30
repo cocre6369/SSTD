@@ -1,4 +1,3 @@
-[assembly: Xunit.CollectionBehavior(DisableTestParallelization = true)]
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
@@ -7,6 +6,8 @@ using SSTD.Automation;
 using SSTD.Core;
 using SSTD.Vision;
 using Xunit;
+
+[assembly: Xunit.CollectionBehavior(DisableTestParallelization = true)]
 
 namespace SSTD.WindowsTests;
 file static class ProcessHelper { [System.Runtime.InteropServices.DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(nint h,out uint pid); }

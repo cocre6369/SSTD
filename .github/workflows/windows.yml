@@ -82,7 +82,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: ./tools/Publish-CiLog.ps1 -Path artifacts/launcher.log
       - name: Publish self-contained executable
-        run: dotnet publish src/SSTD.UI/SSTD.UI.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o artifacts/publish
+        run: dotnet publish src/SSTD.UI/SSTD.UI.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o artifacts/publish
       - name: Executable startup smoke test
         shell: pwsh
         run: ./tools/Smoke.ps1 -Exe artifacts/publish/SSTD.exe

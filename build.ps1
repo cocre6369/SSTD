@@ -29,6 +29,8 @@ try {
     if (-not $SkipTests) {
         & dotnet test tests/SSTD.Tests/SSTD.Tests.csproj -c Release --no-build --logger 'trx;LogFileName=tests.trx' --results-directory "$artifacts/test-results"
         if ($LASTEXITCODE) { throw 'Tests failed.' }
+        & dotnet publish tools/SSTD.TestApp/SSTD.TestApp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o "$artifacts/test-fixture"
+        if ($LASTEXITCODE) { throw 'Windows fixture publish failed.' }
         & dotnet test tests/SSTD.WindowsTests/SSTD.WindowsTests.csproj -c Release --no-build --logger 'trx;LogFileName=windows.trx' --results-directory "$artifacts/test-results"
         if ($LASTEXITCODE) { throw 'Windows integration tests failed.' }
     }

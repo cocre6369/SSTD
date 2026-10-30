@@ -7,7 +7,7 @@ using SSTD.Core;
 namespace SSTD.Security;
 
 /// <summary>No reference to AI/planner. All decisions use typed actions and live OS metadata.</summary>
-public sealed class SecurityEngine(IPolicyContext context) : ISecurityEngine
+public sealed class SecurityEngine(IPolicyContext context, Func<string, string>? documentHandler = null) : ISecurityEngine
 {
     private static readonly HashSet<string> Keys = new(StringComparer.OrdinalIgnoreCase)
     { "enter","return","tab","escape","esc","up","down","left","right","home","end","pageup","pagedown","backspace","delete","insert","space","f1","f2","f3","f4","f5","f6","f7","f8","f9","f10","f11","f12","a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","0","1","2","3","4","5","6","7","8","9",".","-","+",",","/",";" };
@@ -47,8 +47,10 @@ public sealed class SecurityEngine(IPolicyContext context) : ISecurityEngine
             if (!Directory.Exists(path) && !extensions.Contains(Path.GetExtension(path).ToLowerInvariant())) return SecurityDecision.Deny("This document type is not permitted. Executable, script, macro-enabled, and shortcut files cannot be opened.");
             if (File.Exists(path))
             {
-                var handler = Automation.ApplicationDiscovery.DocumentHandler(path); var candidate = Automation.ApplicationDiscovery.Describe(handler);
-                if (!IsSafeExecutablePath(handler, out var handlerReason) || ApplicationPolicy.IsBlocked(handler, candidate.OriginalName, candidate.Description)) return SecurityDecision.Deny("The document's associated application is blocked: " + handlerReason);
+                var handler = documentHandler?.Invoke(path);
+                if (handler is not null && handler.Contains('!') && !handler.Contains('\\') && !handler.Contains('/'))
+                    return ApplicationPolicy.IsBlockedPackage(handler, handler) ? SecurityDecision.Deny("The document handler is a blocked system application.") : new(true, "Validated packaged document handler.", permission, Target: path);
+                if (string.IsNullOrWhiteSpace(handler) || !IsSafeExecutablePath(handler, out var handlerReason)) return SecurityDecision.Deny("The document's associated application could not be verified or is blocked: " + handlerReason);
             }
             return new(true, "Read/open only; an existing file will never be replaced.", permission, Target: path);
         }

@@ -129,6 +129,7 @@ public static class ApplicationDiscovery
         // ASSOCF_INIT_IGNOREUNKNOWN=0x400, ASSOCSTR_EXECUTABLE=2. Resolve, never execute a command string.
         Marshal.ThrowExceptionForHR(Native.AssocQueryString(0x400, 2, Path.GetExtension(path), null, text, ref length));
         var value = text.ToString();
+        if (value.Contains('!') && !value.Contains('\\') && !value.Contains('/')) return value;
         var exe = value.StartsWith('"') ? value[1..].Split('"')[0] : value;
         if (!exe.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
         {
@@ -144,7 +145,7 @@ public static class ApplicationDiscovery
         if (File.Exists(path))
         {
             var handler = DocumentHandler(path); var candidate = Describe(handler);
-            if (ApplicationPolicy.IsBlocked(handler, candidate.OriginalName, candidate.Description) || !File.Exists(handler)) throw new InvalidOperationException("The document handler is blocked or unavailable.");
+            if (candidate.AppUserModelId is null && (ApplicationPolicy.IsBlocked(handler, candidate.OriginalName, candidate.Description) || !File.Exists(handler))) throw new InvalidOperationException("The document handler is blocked or unavailable.");
         }
         if (Directory.Exists(path))
         {

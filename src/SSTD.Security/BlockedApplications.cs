@@ -36,6 +36,7 @@ public static class ApplicationPolicy
         path = path.Replace('/', '\\');
         var file = Path.GetFileName(path);
         if (IsBlockedName(file) || IsBlockedName(processName) || Description.IsMatch(processName) || Title.IsMatch(title)) return true;
+        if (file.Equals("wt.exe", StringComparison.OrdinalIgnoreCase) || file.Equals("windowsterminal.exe", StringComparison.OrdinalIgnoreCase) || file.Equals("pwsh.exe", StringComparison.OrdinalIgnoreCase)) return true;
         if (className is "ConsoleWindowClass" or "CASCADIA_HOSTING_WINDOW_CLASS" or "PseudoConsoleWindow") return true;
         if (path.Contains(@"WindowsApps\Microsoft.WindowsTerminal", StringComparison.OrdinalIgnoreCase) ||
             path.Contains(@"WindowsApps\Microsoft.PowerShell", StringComparison.OrdinalIgnoreCase) ||

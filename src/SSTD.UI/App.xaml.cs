@@ -63,8 +63,12 @@ public partial class App : System.Windows.Application
             collection.AddSingleton<MainViewModel>();
             _services = collection.BuildServiceProvider();
             if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "services-built");
+            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "preferences");
             ApplyPreferences(_settings);
-            _window = new MainWindow(_services.GetRequiredService<MainViewModel>()); MainWindow = _window;
+            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "resolving-vm");
+            var vm = _services.GetRequiredService<MainViewModel>();
+            if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "vm-resolved");
+            _window = new MainWindow(vm); MainWindow = _window;
             if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "window-constructed");
             CreateTray();
             if (SmokeMode) await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-stage.txt"), "tray-created");

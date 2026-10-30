@@ -36,7 +36,7 @@ try {
     }
     if ($Package -in 'portable','installer','all') {
         $publish = Join-Path $artifacts 'publish'
-        & dotnet publish src/SSTD.UI/SSTD.UI.csproj -c Release -r win-x64 --self-contained true -p:Version=$Version -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=embedded -o $publish
+        & dotnet publish src/SSTD.UI/SSTD.UI.csproj -c Release -r win-x64 --self-contained true -p:Version=$Version -p:PublishSingleFile=false -p:DebugType=embedded -o $publish
         if ($LASTEXITCODE) { throw 'Publish failed.' }
         & "$root/tools/Smoke.ps1" -Exe "$publish/SSTD.exe"
     }

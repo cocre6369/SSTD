@@ -20,7 +20,7 @@ git checkout arena/6dc16062-sstd
 ./build.ps1 -Package all -Version 1.0.0
 ```
 
-The script restores, builds, runs portable and real Windows tests, publishes the fixture, publishes the self-contained executable, runs startup smoke tests, builds the installer, runs install/restart/uninstall smoke tests and writes hashes. Packaging is blocked when tests fail; do not use `-SkipTests` for a release.
+The script restores, builds, runs portable and real Windows tests, publishes the fixture, publishes the self-contained application folder, runs startup smoke tests, builds the installer, runs install/restart/uninstall smoke tests and writes hashes. Packaging is blocked when tests fail; do not use `-SkipTests` for a release.
 
 Individual commands:
 
@@ -30,11 +30,11 @@ dotnet build SSTD.sln -c Release --no-restore -p:Version=1.0.0
 dotnet test tests/SSTD.Tests/SSTD.Tests.csproj -c Release --no-build
 dotnet publish tools/SSTD.TestApp/SSTD.TestApp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o artifacts/test-fixture
 dotnet test tests/SSTD.WindowsTests/SSTD.WindowsTests.csproj -c Release --no-build
-dotnet publish src/SSTD.UI/SSTD.UI.csproj -c Release -r win-x64 --self-contained true -p:Version=1.0.0 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=embedded -o artifacts/publish
+dotnet publish src/SSTD.UI/SSTD.UI.csproj -c Release -r win-x64 --self-contained true -p:Version=1.0.0 -p:PublishSingleFile=false -p:DebugType=embedded -o artifacts/publish
 & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /DAppVersion=1.0.0 installer/SSTD.iss
 ```
 
-Outputs: `artifacts/publish/SSTD.exe`, `artifacts/SSTD-Setup.exe`, `artifacts/SHA256SUMS.txt`, test results and smoke reports. The installer creates Start Menu and optional Desktop shortcuts and a standard per-user uninstaller. It does not install Ollama, download models, alter system settings or remove unrelated files.
+Outputs: `artifacts/publish/` (self-contained app folder), `artifacts/SSTD-Setup.exe`, `artifacts/SHA256SUMS.txt`, test results and smoke reports. The installer creates Start Menu and optional Desktop shortcuts and a standard per-user uninstaller. It does not install Ollama, download models, alter system settings or remove unrelated files.
 
 ## Linux development
 

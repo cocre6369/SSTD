@@ -34,25 +34,25 @@ public static class ApplicationPolicy
     }
     public static bool IsBlocked(string path, string processName = "", string title = "", string className = "")
     {
-        path = path.Replace('/', '\\');
-        var file = Path.GetFileName(path);
+        path = path.Replace('\\', '/');
+        var file = path.Split('/').Last();
         if (IsBlockedName(file) || IsBlockedName(processName) || Description.IsMatch(processName) || Title.IsMatch(title)) return true;
         if (file.Equals("wt.exe", StringComparison.OrdinalIgnoreCase) || file.Equals("windowsterminal.exe", StringComparison.OrdinalIgnoreCase) || file.Equals("pwsh.exe", StringComparison.OrdinalIgnoreCase)) return true;
         if (className is "ConsoleWindowClass" or "CASCADIA_HOSTING_WINDOW_CLASS" or "PseudoConsoleWindow") return true;
-        if (path.Contains(@"WindowsApps\Microsoft.WindowsTerminal", StringComparison.OrdinalIgnoreCase) ||
-            path.Contains(@"WindowsApps\Microsoft.PowerShell", StringComparison.OrdinalIgnoreCase) ||
-            path.Contains(@"WindowsApps\Microsoft.Windows.Console", StringComparison.OrdinalIgnoreCase)) return true;
+        if (path.Contains(@"WindowsApps/Microsoft.WindowsTerminal", StringComparison.OrdinalIgnoreCase) ||
+            path.Contains(@"WindowsApps/Microsoft.PowerShell", StringComparison.OrdinalIgnoreCase) ||
+            path.Contains(@"WindowsApps/Microsoft.Windows.Console", StringComparison.OrdinalIgnoreCase)) return true;
         // An allow-list for the few genuinely ordinary inbox apps; other Windows tools fail closed.
-        string[] inboxExceptions = [@"\windows\explorer.exe", @"\windows\notepad.exe", @"\windows\system32\notepad.exe", @"\windows\system32\mspaint.exe", @"\windows\winhlp32.exe"];
-        if (ApplicationPolicy.IsScriptOrInstaller(file) && path.Contains(@"\windows\", StringComparison.OrdinalIgnoreCase)) return true;
+        string[] inboxExceptions = [@"/windows/explorer.exe", @"/windows/notepad.exe", @"/windows/system32/notepad.exe", @"/windows/system32/mspaint.exe", @"/windows/winhlp32.exe"];
+        if (ApplicationPolicy.IsScriptOrInstaller(file) && path.Contains(@"/windows/", StringComparison.OrdinalIgnoreCase)) return true;
         if (file.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) &&
-            (path.Contains(@"\windows\system32\", StringComparison.OrdinalIgnoreCase) || path.Contains(@"\windows\syswow64\", StringComparison.OrdinalIgnoreCase)) &&
+            (path.Contains(@"/windows/system32/", StringComparison.OrdinalIgnoreCase) || path.Contains(@"/windows/syswow64/", StringComparison.OrdinalIgnoreCase)) &&
             !inboxExceptions.Any(x => path.EndsWith(x, StringComparison.OrdinalIgnoreCase))) return true;
-        if (file.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) && path.Contains(@"\windows\", StringComparison.OrdinalIgnoreCase) &&
+        if (file.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) && path.Contains(@"/windows/", StringComparison.OrdinalIgnoreCase) &&
             !inboxExceptions.Any(x => path.EndsWith(x, StringComparison.OrdinalIgnoreCase))) return true;
         return false;
     }
-    public static string Normalize(string value) => Path.GetFileName(value.Replace('/', '\\').Trim().Trim('"')).ToLowerInvariant();
+    public static string Normalize(string value) => value.Replace('\\', '/').Split('/').Last().Trim().Trim('"').ToLowerInvariant();
     public static bool IsScriptOrInstaller(string path) => Path.GetExtension(path).ToLowerInvariant() is
         ".bat" or ".cmd" or ".ps1" or ".psm1" or ".vbs" or ".vbe" or ".js" or ".jse" or ".wsf" or ".wsh" or
         ".scr" or ".com" or ".msi" or ".msp" or ".msc" or ".cpl" or ".reg" or ".lnk" or ".url" or ".hta" or ".jar" or ".appref-ms";

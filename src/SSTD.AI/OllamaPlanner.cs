@@ -48,7 +48,7 @@ public sealed class OllamaPlanner(IOllamaClient client, Func<SstdSettings> setti
             var extracted = ExtractReply(output.ToString());
             if (extracted.Length > reply.Length) { onToken(extracted[reply.Length..]); reply = extracted; actionParsed = true; }
         }
-        var parsed = ActionContract.Parse(output.ToString());
+        var parsed = ActionContract.Parse(document.RootElement.GetProperty("action"));
         JsonDocument document;
         try { document = JsonDocument.Parse(output.ToString()); }
         catch (JsonException) { throw new OllamaException("The model returned invalid JSON. Try a tool-capable instruct model or lower the temperature."); }

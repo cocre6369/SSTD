@@ -49,7 +49,7 @@ public sealed class SecurityEngine(IPolicyContext context) : ISecurityEngine
         }
         WindowSnapshot? target = null;
         if (action.Arguments.ContainsKey("windowId")) target = await context.WindowAsync(action.Str("windowId"), ct).ConfigureAwait(false);
-        else if (action.Name is not ("WaitForApplication" or "InspectWindow" or "InspectUIHierarchy")) target = await context.CurrentAsync(ct).ConfigureAwait(false);
+        else if (action.Name is not "WaitForApplication") target = await context.CurrentAsync(ct).ConfigureAwait(false);
         if (action.Arguments.ContainsKey("windowId") && target is null) return SecurityDecision.Deny("The target window no longer exists. Observe the desktop again.");
         if (target is not null)
         {
@@ -82,7 +82,7 @@ public sealed class SecurityEngine(IPolicyContext context) : ISecurityEngine
             if (!Keys.Contains(key)) return SecurityDecision.Deny("The key is not on the productivity allow-list. Windows/system shortcuts are forbidden.");
             if (IsShellInputContext(target, element)) return SecurityDecision.Deny("Keyboard launch/navigation in a shell or system input surface is blocked.");
             if (IsFileManager(target) && key is "delete" or "backspace" or "f2" or "enter") return SecurityDecision.Deny("File deletion, renaming, and blind activation in file lists are blocked. Open a validated document explicitly.");
-            if (key is "delete" or "backspace" && element is not null && !IsTextEdit(element)) return SecurityDecision.Deny("Delete/Backspace is only allowed in an identified text editor, never in a file or account list.");
+            if (key is "delete" or "backspace" && (element is null || !IsTextEdit(element))) return SecurityDecision.Deny("Delete/Backspace is only allowed in an identified text editor, never in a file or account list.");
             if (key is "f2" or "f12" or "f5") return SecurityDecision.Deny("This function key can open a save, rename, developer, or execution surface; use a safer registered action.");
             if (key is "enter" or "return" && element is not null && IsExternalEditor(target, element)) return External(permission, target, "Press Enter in a message composer");
             return new(true, "Allow-listed productivity key.", permission, Target: target.Title);
@@ -95,7 +95,7 @@ public sealed class SecurityEngine(IPolicyContext context) : ISecurityEngine
             if (!Shortcuts.Contains(combo)) return SecurityDecision.Deny("Only normal editing, selection, search, and navigation shortcuts are allowed. Run, terminal, task manager, developer tools, save/overwrite, and OS shortcuts are blocked.");
             if (IsShellInputContext(target, element)) return SecurityDecision.Deny("Shortcuts cannot be used in shell/system input surfaces.");
             if (IsFileManager(target) && combo is "ctrl+x" or "ctrl+a" or "ctrl+v") return SecurityDecision.Deny("File move/replace operations are blocked in file managers.");
-            if (combo == "ctrl+x" && element is not null && !IsTextEdit(element)) return SecurityDecision.Deny("Cut is only allowed in an identified text editor.");
+            if (combo == "ctrl+x" && (element is null || !IsTextEdit(element))) return SecurityDecision.Deny("Cut is only allowed in an identified text editor.");
             if (combo == "ctrl+l" && IsFileManager(target)) return SecurityDecision.Deny("The file-manager address bar can execute commands and is blocked.");
             return new(true, "Allow-listed productivity shortcut.", permission, Target: target.Title);
         }

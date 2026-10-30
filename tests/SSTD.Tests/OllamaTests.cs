@@ -48,7 +48,7 @@ public class OllamaTests
     public void Rejects_Invalid_Model_Names(string name) => Assert.Throws<ArgumentException>(() => OllamaClient.ValidateModel(name));
     [Fact] public void Reply_Extractor_Handles_Streaming_Escapes()
     {
-        Assert.Equal("Hello", OllamaPlanner.ExtractReply("{\"reply\":\"Hel"));
+        Assert.Equal("Hel", OllamaPlanner.ExtractReply("{\"reply\":\"Hel"));
         Assert.Equal("A \"quote\"\nnext", OllamaPlanner.ExtractReply("{\"reply\":\"A \\\"quote\\\"\\nnext\",\"action\":null}"));
     }
     [Fact] public async Task Planner_Returns_One_Validated_Action()

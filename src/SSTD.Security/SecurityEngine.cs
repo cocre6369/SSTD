@@ -50,7 +50,8 @@ public sealed class SecurityEngine(IPolicyContext context, Func<string, string>?
                 var handler = documentHandler?.Invoke(path);
                 if (handler is not null && handler.Contains('!') && !handler.Contains('\\') && !handler.Contains('/'))
                     return ApplicationPolicy.IsBlockedPackage(handler, handler) ? SecurityDecision.Deny("The document handler is a blocked system application.") : new(true, "Validated packaged document handler.", permission, Target: path);
-                if (string.IsNullOrWhiteSpace(handler) || !IsSafeExecutablePath(handler, out var handlerReason)) return SecurityDecision.Deny("The document's associated application could not be verified or is blocked: " + handlerReason);
+                var handlerReason = "";
+                if (string.IsNullOrWhiteSpace(handler) || !IsSafeExecutablePath(handler, out handlerReason)) return SecurityDecision.Deny("The document's associated application could not be verified or is blocked: " + handlerReason);
             }
             return new(true, "Read/open only; an existing file will never be replaced.", permission, Target: path);
         }

@@ -48,7 +48,6 @@ public sealed class OllamaPlanner(IOllamaClient client, Func<SstdSettings> setti
             var extracted = ExtractReply(output.ToString());
             if (extracted.Length > reply.Length) { onToken(extracted[reply.Length..]); reply = extracted; actionParsed = true; }
         }
-        var parsed = ActionContract.Parse(document.RootElement.GetProperty("action"));
         JsonDocument document;
         try { document = JsonDocument.Parse(output.ToString()); }
         catch (JsonException) { throw new OllamaException("The model returned invalid JSON. Try a tool-capable instruct model or lower the temperature."); }
@@ -61,6 +60,7 @@ public sealed class OllamaPlanner(IOllamaClient client, Func<SstdSettings> setti
             reply = r.GetString() ?? "";
             if (!actionParsed && reply.Length > 0) onToken(reply);
             if (action.ValueKind == JsonValueKind.Null) return new(reply, null, done.GetBoolean());
+            var parsed = ActionContract.Parse(action);
             if (parsed.Status != ActionParseStatus.Valid || parsed.Action is null) throw new OllamaException(parsed.Error);
             if (done.GetBoolean()) throw new OllamaException("A response cannot request an action and claim the task is already complete.");
             return new(reply, parsed.Action, false);

@@ -1,0 +1,20 @@
+## Build outputs
+[Bb]in/
+[Oo]bj/
+artifacts/
+TestResults/
+*.user
+*.suo
+.vs/
+.idea/
+.vscode/
+*.log
+*.trx
+*.zip
+# Local SDK / tool installations
+.tools/
+# Never commit signing secrets or local application data
+*.pfx
+*.snk
+.env
+local-settings.json

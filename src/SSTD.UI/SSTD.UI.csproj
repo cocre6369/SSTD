@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+  <PropertyGroup><UseWPF>true</UseWPF><UseWindowsForms>true</UseWindowsForms><OutputType>WinExe</OutputType><ApplicationManifest>app.manifest</ApplicationManifest><ApplicationIcon>..\..\assets\SSTD.ico</ApplicationIcon><AssemblyName>SSTD</AssemblyName><RootNamespace>SSTD.UI</RootNamespace><PublishTrimmed>false</PublishTrimmed></PropertyGroup>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
+    <ProjectReference Include="..\SSTD.Core\SSTD.Core.csproj" />
+    <ProjectReference Include="..\SSTD.AI\SSTD.AI.csproj" />
+    <ProjectReference Include="..\SSTD.Planner\SSTD.Planner.csproj" />
+    <ProjectReference Include="..\SSTD.Automation\SSTD.Automation.csproj" />
+    <ProjectReference Include="..\SSTD.Vision\SSTD.Vision.csproj" />
+    <ProjectReference Include="..\SSTD.Security\SSTD.Security.csproj" />
+    <ProjectReference Include="..\SSTD.Memory\SSTD.Memory.csproj" />
+  </ItemGroup>
+</Project>

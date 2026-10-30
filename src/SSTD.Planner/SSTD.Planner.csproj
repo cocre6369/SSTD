@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+
+    <ProjectReference Include="..\SSTD.Core\SSTD.Core.csproj" />
+    <ProjectReference Include="..\SSTD.AI\SSTD.AI.csproj" />
+    <ProjectReference Include="..\SSTD.Security\SSTD.Security.csproj" />
+  </ItemGroup>
+</Project>

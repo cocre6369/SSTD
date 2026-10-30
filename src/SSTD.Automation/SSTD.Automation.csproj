@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net8.0-windows</TargetFramework>
+  <PropertyGroup><UseWPF>true</UseWPF><UseWindowsForms>true</UseWindowsForms></PropertyGroup>
+  </PropertyGroup>
+  <ItemGroup>
+
+    <ProjectReference Include="..\SSTD.Core\SSTD.Core.csproj" />
+    <ProjectReference Include="..\SSTD.Security\SSTD.Security.csproj" />
+    <ProjectReference Include="..\SSTD.Vision\SSTD.Vision.csproj" />
+  </ItemGroup>
+</Project>

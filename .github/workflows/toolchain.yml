@@ -1,0 +1,18 @@
+name: Prepare Linux build SDK
+on: workflow_dispatch
+permissions: contents: read
+jobs:
+  sdk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Archive official SDK
+        run: tar -czf dotnet-sdk-linux-x64.tar.gz -C "$DOTNET_ROOT" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-sdk-linux-x64
+          path: dotnet-sdk-linux-x64.tar.gz
+          retention-days: 1
+          compression-level: 0

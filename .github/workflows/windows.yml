@@ -1,0 +1,51 @@
+name: Windows build and verification
+on:
+  push:
+    branches: ['arena/**', main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore
+        run: dotnet restore SSTD.sln --runtime win-x64
+      - name: Build
+        run: dotnet build SSTD.sln -c Release --no-restore
+      - name: Independent security and unit tests
+        run: dotnet test tests/SSTD.Tests/SSTD.Tests.csproj -c Release --no-build --logger "trx;LogFileName=tests.trx" --results-directory artifacts/test-results
+      - name: Publish self-contained executable
+        run: dotnet publish src/SSTD.UI/SSTD.UI.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o artifacts/publish
+      - name: Executable startup smoke test
+        shell: pwsh
+        run: ./tools/Smoke.ps1 -Exe artifacts/publish/SSTD.exe
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+      - name: Build installer
+        run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\SSTD.iss'
+      - name: Install, restart, and uninstall smoke test
+        shell: pwsh
+        run: ./tools/Installer-Smoke.ps1 -Installer artifacts/SSTD-Setup.exe
+      - name: Checksums
+        shell: pwsh
+        run: 'Get-FileHash artifacts/publish/SSTD.exe,artifacts/SSTD-Setup.exe -Algorithm SHA256 | Format-List | Out-File artifacts/SHA256SUMS.txt'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: SSTD-windows-x64
+          path: |
+            artifacts/publish/SSTD.exe
+            artifacts/SSTD-Setup.exe
+            artifacts/SHA256SUMS.txt
+            artifacts/test-results/
+            artifacts/smoke-result.txt
+            artifacts/installer-smoke.txt
+          if-no-files-found: warn
+          retention-days: 14

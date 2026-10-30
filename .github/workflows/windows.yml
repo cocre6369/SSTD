@@ -39,6 +39,18 @@ jobs:
       - name: Publish real Windows test fixture
         shell: pwsh
         run: dotnet publish tools/SSTD.TestApp/SSTD.TestApp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o artifacts/test-fixture
+      - name: Inspect Windows desktop session
+        shell: pwsh
+        run: |
+          "UserInteractive=$([Environment]::UserInteractive); PID=$PID; Session=$((Get-Process -Id $PID).SessionId); User=$env:USERNAME" | Tee-Object artifacts/session.log
+          query session 2>&1 | Tee-Object artifacts/session.log -Append
+          Get-Process explorer -ErrorAction SilentlyContinue | Select-Object Id,SessionId,MainWindowHandle | Out-String | Tee-Object artifacts/session.log -Append
+          Get-Command PsExec64,PsExec -ErrorAction SilentlyContinue | Out-String | Tee-Object artifacts/session.log -Append
+      - name: Publish session diagnostic
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./tools/Publish-CiLog.ps1 -Path artifacts/session.log
       - name: Real Windows UI Automation tests
         timeout-minutes: 3
         shell: pwsh

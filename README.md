@@ -7,7 +7,10 @@
 
 ## Download and run
 
-1. Download `SSTD-Setup.exe` from the repository's successful Windows build artifact or Releases page.
+**Download page:** https://cocre6369.github.io/SSTD/  
+**Direct release:** https://github.com/cocre6369/SSTD/releases/tag/v1.0.0
+
+1. Download `SSTD-Setup.exe` from the download page or Releases page.
 2. Verify its SHA-256 against `SHA256SUMS.txt`. The build is unsigned unless a signed release is explicitly identified.
 3. Run the installer. It installs for the current user and creates a Start Menu shortcut. Visual Studio, .NET development tools, and a terminal are **not** needed by end users.
 4. Install and start Ollama separately. See [Ollama setup](docs/OLLAMA.md).

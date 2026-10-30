@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Download SSTD — Super Terminal of Deepthinking</title>
+<meta name="description" content="Download the verified Windows x64 installer for SSTD, a local-first desktop agent powered by Ollama.">
+<style>
+:root{color-scheme:dark;--bg:#0b0f14;--panel:#121923;--border:#253140;--text:#e7edf5;--muted:#8b9baf;--accent:#65cde7;--accent-dark:#153746}
+*{box-sizing:border-box}body{margin:0;font:16px/1.6 "Segoe UI",system-ui,sans-serif;background:radial-gradient(1200px 600px at 20% -10%,#12202b 0%,var(--bg)55%);color:var(--text)}
+a{color:var(--accent)}main{max-width:960px;margin:0 auto;padding:48px 24px 80px}header{display:flex;gap:16px;align-items:center;margin-bottom:32px}.logo{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--accent),#2f7f96);display:grid;place-items:center;font-weight:800;color:#06202a;font-size:20px}h1{font-size:clamp(28px,4vw,44px);line-height:1.15;margin:0 0 8px}h2{font-size:20px;margin:0 0 12px}.sub{color:var(--muted);margin:0}.card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:24px;margin:20px 0}.hero{display:grid;gap:20px;grid-template-columns:1.4fr 1fr;align-items:center}@media(max-width:760px){.hero{grid-template-columns:1fr}}.btn{display:inline-block;background:var(--accent);color:#06202a;font-weight:700;text-decoration:none;padding:14px 22px;border-radius:10px;border:1px solid var(--accent)}.btn.secondary{background:transparent;color:var(--accent);border-color:var(--border)}.meta{display:grid;gap:8px;color:var(--muted);font-size:14px}.pill{display:inline-block;background:var(--accent-dark);color:var(--accent);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;margin-bottom:12px}code,pre{font-family:ui-monospace,Consolas,monospace}pre{background:#0d131b;border:1px solid var(--border);border-radius:10px;padding:14px;overflow:auto;font-size:13px}ul{margin:8px 0 0;padding-left:20px}li{margin:6px 0}.grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}.muted{color:var(--muted)}footer{margin-top:36px;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="logo">S</div>
+  <div>
+    <h1>SSTD</h1>
+    <p class="sub">Super Terminal of Deepthinking — local-first Windows desktop agent</p>
+  </div>
+</header>
+
+<section class="card hero">
+  <div>
+    <span class="pill">Verified Windows x64 build</span>
+    <h2>Download SSTD 1.0.0</h2>
+    <p class="muted">Self-contained installer for Windows 10/11 x64. No .NET SDK or development tools required. Ollama is installed separately by you.</p>
+    <p>
+      <a class="btn" href="https://github.com/cocre6369/SSTD/releases/download/v1.0.0/SSTD-Setup.exe">Download SSTD-Setup.exe</a>
+      <a class="btn secondary" href="https://github.com/cocre6369/SSTD/releases/tag/v1.0.0">Release notes</a>
+    </p>
+    <p class="muted">If the direct button is unavailable, open the release page and download <code>SSTD-Setup.exe</code> from Assets.</p>
+  </div>
+  <div class="meta">
+    <div><strong>File:</strong> SSTD-Setup.exe</div>
+    <div><strong>Size:</strong> 54,853,834 bytes</div>
+    <div><strong>Platform:</strong> Windows 10 2004+ / Windows 11, x64</div>
+    <div><strong>Install:</strong> per-user, Start Menu shortcut, scoped uninstaller</div>
+    <div><strong>SHA-256:</strong><br><code>b750b5180febfd9a30ff14c1580fe25a566d1311746012bb9bfa5e2639733d33</code></div>
+  </div>
+</section>
+
+<section class="grid">
+  <div class="card">
+    <h2>Quick start</h2>
+    <ol>
+      <li>Download and run <code>SSTD-Setup.exe</code>.</li>
+      <li>Install and start <a href="https://ollama.com">Ollama</a> separately.</li>
+      <li>Pull a model, for example:<pre>ollama pull qwen2.5:7b-instruct</pre></li>
+      <li>Open SSTD, connect to <code>http://localhost:11434</code>, and select a model.</li>
+      <li>Review <strong>Settings → Automation</strong> before enabling desktop control.</li>
+    </ol>
+  </div>
+  <div class="card">
+    <h2>What was verified</h2>
+    <ul>
+      <li>140 portable security/contract/unit tests passed.</li>
+      <li>4 real Windows UI Automation tests passed.</li>
+      <li>Executable startup smoke passed.</li>
+      <li>Installer install/start/uninstall smoke passed.</li>
+      <li>Installer SHA-256 matched after retrieval.</li>
+    </ul>
+    <p class="muted">CI did not run end-to-end tasks against a live Ollama model.</p>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Safety boundary</h2>
+  <p>SSTD is not a terminal. It uses a closed, validated action registry and an independent security engine. It blocks terminals/shells, administration/system configuration tools, credential managers and password contexts. It does not overwrite existing files. External commits and model downloads require explicit approval. Desktop control starts disabled.</p>
+</section>
+
+<section class="card">
+  <h2>Verify the download</h2>
+  <pre>Get-FileHash .\SSTD-Setup.exe -Algorithm SHA256</pre>
+  <p class="muted">Expected SHA-256: <code>b750b5180febfd9a30ff14c1580fe25a566d1311746012bb9bfa5e2639733d33</code>. The build is unsigned unless a signed release is explicitly identified.</p>
+</section>
+
+<footer>
+  Source: <a href="https://github.com/cocre6369/SSTD">github.com/cocre6369/SSTD</a> ·
+  <a href="https://github.com/cocre6369/SSTD/blob/arena/6dc16062-sstd/docs/TESTING.md">Testing</a> ·
+  <a href="https://github.com/cocre6369/SSTD/blob/arena/6dc16062-sstd/docs/SECURITY.md">Security</a> ·
+  <a href="https://github.com/cocre6369/SSTD/blob/arena/6dc16062-sstd/docs/OLLAMA.md">Ollama setup</a>
+</footer>
+</main>
+</body>
+</html>

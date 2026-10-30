@@ -1,0 +1,45 @@
+name: Publish installer release
+
+on:
+  push:
+    branches: [arena/6dc16062-sstd]
+    paths:
+      - '.github/workflows/release.yml'
+      - 'site/**'
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: installer-release
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 41058600970
+          name: SSTD-windows-x64
+          path: verified
+      - name: Create or update v1.0.0 release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          setup=$(find verified -type f -name SSTD-Setup.exe | head -1)
+          sums=$(find verified -type f -name SHA256SUMS.txt | head -1)
+          test -n "$setup"
+          test -n "$sums"
+          sha256sum "$setup"
+          notes='Self-contained Windows 10/11 x64 installer. Verified CI: 140 portable tests, 4 real Windows UIA tests, startup smoke, install/uninstall smoke. SHA-256: b750b5180febfd9a30ff14c1580fe25a566d1311746012bb9bfa5e2639733d33. Ollama is installed separately by the user.'
+          if gh release view v1.0.0 >/dev/null 2>&1; then
+            gh release upload v1.0.0 "$setup" "$sums" --clobber
+          else
+            gh release create v1.0.0 "$setup" "$sums" --target "$GITHUB_SHA" --title 'SSTD 1.0.0 — Windows x64' --notes "$notes"
+          fi

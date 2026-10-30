@@ -7,8 +7,8 @@
 
 - **Version:** 1.0.1
 - **File:** `SSTD-Setup.exe`
-- **Size:** 54,864,609 bytes
-- **SHA-256:** `18aa983ed98b9b4c37b8aaea6e0aa1eab999962a86a70a706fb5dbf3ff675915`
+- **Size:** 54,863,159 bytes
+- **SHA-256:** `77a4a49b9399c7762311db861daa7329a844ded394ae4e6567c43dd7c80cd525`
 - **Install type:** per-user, Start Menu shortcut, scoped uninstaller
 - **End-user requirements:** Windows 10 2004/build 19041 or Windows 11, x64. No .NET SDK or development tools required.
 
@@ -27,7 +27,7 @@ Get-FileHash .\SSTD-Setup.exe -Algorithm SHA256
 Expected SHA-256:
 
 ```text
-18aa983ed98b9b4c37b8aaea6e0aa1eab999962a86a70a706fb5dbf3ff675915
+77a4a49b9399c7762311db861daa7329a844ded394ae4e6567c43dd7c80cd525
 ```
 
 ## Quick start

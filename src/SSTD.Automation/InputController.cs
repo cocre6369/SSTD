@@ -3,7 +3,7 @@ using SSTD.Core;
 using SSTD.Security;
 
 namespace SSTD.Automation;
-public sealed class InputController(WindowsDesktop desktop, Func<SstdSettings> settings)
+public sealed class InputController(WindowsDesktop desktop)
 {
     public void EnsureTarget(WindowSnapshot target, CancellationToken ct)
     {

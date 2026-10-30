@@ -44,7 +44,7 @@ public class WindowsIntegrationTests
         using var p=Process.Start(new ProcessStartInfo(notepad) { UseShellExecute=false })!;
         try
         {
-            var desktop=new WindowsDesktop(); var input=new InputController(desktop,()=>new SstdSettings{DesktopControl=true});
+            var desktop=new WindowsDesktop(); var input=new InputController(desktop);
             var deadline=DateTime.UtcNow.AddSeconds(15); WindowSnapshot? w=null;
             while(DateTime.UtcNow<deadline) { var h=desktop.Handles().FirstOrDefault(h=>{ try{return (ProcessHelper.GetWindowThreadProcessId(h,out var pid)==0?pid:pid)==p.Id;}catch{return false;} }); if(h!=0) { w=desktop.Describe(h,true,CancellationToken.None); if(w.Elements.Any(e=>e.CanEdit))break; } Thread.Sleep(250); }
             Assert.NotNull(w); Assert.False(w!.IsPasswordContext);

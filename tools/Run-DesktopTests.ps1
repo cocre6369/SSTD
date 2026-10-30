@@ -28,6 +28,7 @@ public struct TOKEN_MANDATORY_LABEL { public System.IntPtr Label; public uint At
 [System.Runtime.InteropServices.DllImport("kernel32.dll")] public static extern uint WaitForSingleObject(System.IntPtr h,uint ms);
 [System.Runtime.InteropServices.DllImport("kernel32.dll")] public static extern bool GetExitCodeProcess(System.IntPtr h,out uint code);
 [System.Runtime.InteropServices.DllImport("kernel32.dll")] public static extern bool CloseHandle(System.IntPtr h);
+[System.Runtime.InteropServices.DllImport("kernel32.dll")] public static extern bool TerminateProcess(System.IntPtr h,uint code);
 '@
 $token=[IntPtr]::Zero;$restricted=[IntPtr]::Zero;$sid=[IntPtr]::Zero
 try {
@@ -42,13 +43,14 @@ try {
   $pi=[CiToken.Native+PROCESS_INFORMATION]::new()
   if(-not [CiToken.Native]::CreateProcessWithTokenW($restricted,1,$pwsh,$cmdline,0x400,[IntPtr]::Zero,$Repository,[ref]$si,[ref]$pi)){throw "CreateProcessWithTokenW failed: $([Runtime.InteropServices.Marshal]::GetLastWin32Error())"}
   try{
-    [void][CiToken.Native]::WaitForSingleObject($pi.process,240000)
+    [void][CiToken.Native]::WaitForSingleObject($pi.process,150000)
     [uint32]$code=0;[void][CiToken.Native]::GetExitCodeProcess($pi.process,[ref]$code)
     if(Test-Path $log){Get-Content $log | Write-Host}
+    if($code -eq 259){[void][CiToken.Native]::TerminateProcess($pi.process,259); throw "Desktop verification timed out; process terminated."}
     if($code -ne 0){throw "Desktop verification failed with exit code $code."}
   }finally{[void][CiToken.Native]::CloseHandle($pi.thread);[void][CiToken.Native]::CloseHandle($pi.process)}
 } catch {
-  $_ | Out-String | Set-Content (Join-Path $Repository 'artifacts/windows.log')
+  $_ | Out-String | Set-Content (Join-Path $Repository 'artifacts/launcher.log')
   throw
 } finally {
   if($sid -ne [IntPtr]::Zero){[Runtime.InteropServices.Marshal]::FreeHGlobal($sid)}

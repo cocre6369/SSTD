@@ -4,7 +4,7 @@ namespace SSTD.Planner;
 
 /// <summary>One model decision per fresh observation. Neither the model nor UI can execute an unregistered action.</summary>
 public sealed class AgentRunner(IAgentPlanner planner, IActionExecutor executor, IWindowsSnapshotProvider desktop,
-    ISettingsStore settingsStore, ITaskStore tasks, IConversationStore conversations, Func<SstdSettings> settings)
+    ITaskStore tasks, IConversationStore conversations, Func<SstdSettings> settings)
 {
     public event Action<TaskEvent>? EventRaised;
     public event Action<string>? TokenRaised;
@@ -20,6 +20,8 @@ public sealed class AgentRunner(IAgentPlanner planner, IActionExecutor executor,
         await tasks.CreateAsync(new(id, request, "Running", now, now), ct).ConfigureAwait(false);
         await conversations.AppendAsync(new("user", request), ct).ConfigureAwait(false);
         Emit("Task", "Request accepted by the local action engine.");
+        void OnExecutorEvent(TaskEvent ev) => Emit(ev.Phase, ev.Message, ev.Success);
+        if (executor is IAuditedActionExecutor audited) audited.Activity += OnExecutorEvent;
         var history = new List<string>(); var failures = 0; var invalid = 0; var verifiedActions = 0; var performedActions = 0;
         WindowSnapshot? observation = null; string? lastResult = null; string final = ""; var successful = false;
         try
@@ -84,18 +86,21 @@ public sealed class AgentRunner(IAgentPlanner planner, IActionExecutor executor,
             var status = successful ? (performedActions == 0 || verifiedActions > 0 ? "Completed" : "Unverified") : ct.IsCancellationRequested ? "Stopped" : "Incomplete";
             await tasks.FinishAsync(id, status, CancellationToken.None).ConfigureAwait(false);
             await conversations.AppendAsync(new("assistant", final), CancellationToken.None).ConfigureAwait(false);
+            if (executor is IAuditedActionExecutor a) a.Activity -= OnExecutorEvent;
             return new(successful, verifiedActions > 0, final, performedActions);
         }
         catch (OperationCanceledException)
         {
             final = "Stopped. No further actions will be sent. An input or external change already accepted by Windows cannot be rolled back.";
             Emit("Stopped", final, false); await tasks.FinishAsync(id, "Stopped", CancellationToken.None).ConfigureAwait(false);
+            if (executor is IAuditedActionExecutor a) a.Activity -= OnExecutorEvent;
             return new(false, false, final, performedActions);
         }
         catch (Exception ex)
         {
             final = "Task stopped: " + SensitiveData.SafeError(ex); Emit("Error", final, false);
             await tasks.FinishAsync(id, "Error", CancellationToken.None).ConfigureAwait(false);
+            if (executor is IAuditedActionExecutor a) a.Activity -= OnExecutorEvent;
             return new(false, false, final, performedActions);
         }
     }

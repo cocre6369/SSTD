@@ -5,8 +5,9 @@ using SSTD.Security;
 
 namespace SSTD.Automation;
 
-public sealed class ActionExecutor(ISecurityEngine security, IApprovalBroker approvals, IDesktopBackend backend, IActionServices services) : IActionExecutor
+public sealed class ActionExecutor(ISecurityEngine security, IApprovalBroker approvals, IDesktopBackend backend, IActionServices services) : IAuditedActionExecutor
 {
+    public event Action<TaskEvent>? Activity;
     public async Task<ActionResult> ExecuteAsync(AgentAction action, CancellationToken ct)
     {
         if (!ActionContract.Names.Contains(action.Name)) return ActionResult.Fail("Unregistered action.");
@@ -18,8 +19,14 @@ public sealed class ActionExecutor(ISecurityEngine security, IApprovalBroker app
             if (action.Name is "ClickElement" or "PressKey") details += "\n\n" + await services.DescribeApprovalAsync(action, ct).ConfigureAwait(false);
             if (action.Name == "CreateDocument") details = "Create NEW file (never overwrite):\n" + action.Str("path") + "\n\nContent:\n" + action.Str("content");
             var request = new ApprovalRequest(Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(action.Canonical())))[..24], action.Name, policy.Target ?? "Current application", details, policy.Permission);
+            Activity?.Invoke(new(DateTimeOffset.UtcNow, "Approval", "Approval requested for " + action.Name + " → " + (policy.Target ?? "target")));
             var beforeContext = action.Name is "ClickElement" or "PressKey" ? await services.DescribeApprovalAsync(action, ct).ConfigureAwait(false) : "";
-            if (!await approvals.ApproveAsync(request, ct).ConfigureAwait(false)) return ActionResult.Fail("The user cancelled the approval. No action was performed.");
+            if (!await approvals.ApproveAsync(request, ct).ConfigureAwait(false))
+            {
+                Activity?.Invoke(new(DateTimeOffset.UtcNow, "Approval", "User cancelled " + action.Name + "; no action performed.", false));
+                return ActionResult.Fail("The user cancelled the approval. No action was performed.");
+            }
+            Activity?.Invoke(new(DateTimeOffset.UtcNow, "Approval", "User approved this one " + action.Name + " action."));
             // Approval is bound to the typed action and observed destination; it never overrides policy.
             var refreshed = await security.AuthorizeAsync(action, ct).ConfigureAwait(false);
             if (!refreshed.Allowed) return ActionResult.Fail("Safety policy changed after approval: " + refreshed.Reason);

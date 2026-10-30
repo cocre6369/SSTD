@@ -37,6 +37,7 @@ public interface IActionExecutor
     /// <summary>Implementations MUST independently authorize every call; approval is not a bypass.</summary>
     Task<ActionResult> ExecuteAsync(AgentAction action, CancellationToken ct);
 }
+public interface IAuditedActionExecutor : IActionExecutor { event Action<TaskEvent>? Activity; }
 public interface IDesktopBackend
 {
     Task<ActionResult> ExecuteAuthorizedAsync(AgentAction action, SecurityDecision decision, CancellationToken ct);

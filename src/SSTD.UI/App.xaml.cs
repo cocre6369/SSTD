@@ -53,7 +53,8 @@ public partial class App : System.Windows.Application
             collection.AddSingleton<IAgentPlanner, OllamaPlanner>();
             collection.AddSingleton<Func<SstdSettings>>(_ => () => _settings);
             collection.AddSingleton<Action<SstdSettings>>(_ => value => _settings = value);
-            collection.AddSingleton<Func<bool>>(_ => () => _vision);
+            collection.AddSingleton<ModelCapabilities>();
+            collection.AddSingleton<Func<bool>>(sp => () => sp.GetRequiredService<ModelCapabilities>().Vision);
             collection.AddSingleton<AgentRunner>();
             collection.AddSingleton<MainViewModel>();
             _services = collection.BuildServiceProvider();
@@ -68,7 +69,6 @@ public partial class App : System.Windows.Application
             else System.Windows.MessageBox.Show("SSTD could not start:\n" + SensitiveData.SafeError(ex), "SSTD startup error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
-    private bool _vision;
     public void ApplyPreferences(SstdSettings settings)
     {
         var theme = (SolidColorBrush)Resources["Background"];

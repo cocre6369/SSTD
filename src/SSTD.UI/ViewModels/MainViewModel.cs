@@ -27,6 +27,7 @@ public partial class MainViewModel : ObservableObject, IAsyncDisposable
     private readonly AgentRunner _runner;
     private readonly Func<SstdSettings> _getSettings;
     private readonly Action<SstdSettings> _setSettings;
+    private readonly ModelCapabilities _capabilities;
     private CancellationTokenSource? _runCts;
     private CancellationTokenSource? _pullCts;
     private CancellationTokenSource? _statusCts = new();
@@ -66,9 +67,9 @@ public partial class MainViewModel : ObservableObject, IAsyncDisposable
         new("Work locally", "Your computer, your model", "What can you help me do on this computer, and what actions will you refuse?")
     ];
     public SstdSettings Settings => _getSettings().Clone();
-    public MainViewModel(OllamaClient client, LocalStore store, AgentRunner runner, Func<SstdSettings> getSettings, Action<SstdSettings> setSettings)
+    public MainViewModel(OllamaClient client, LocalStore store, AgentRunner runner, Func<SstdSettings> getSettings, Action<SstdSettings> setSettings, ModelCapabilities capabilities)
     {
-        _client = client; _store = store; _runner = runner; _getSettings = getSettings; _setSettings = setSettings;
+        _client = client; _store = store; _runner = runner; _getSettings = getSettings; _setSettings = setSettings; _capabilities = capabilities;
         runner.EventRaised += OnEvent;
         runner.TokenRaised += OnToken;
         runner.ReplyCompleted += OnReplyCompleted;
@@ -112,6 +113,12 @@ public partial class MainViewModel : ObservableObject, IAsyncDisposable
             }
             ActiveModel = selected.Length > 0 ? selected : "No models installed";
             ModelDetails = $"{models.Count} local model{(models.Count == 1 ? "" : "s")} · Ollama {version}";
+            _capabilities.Vision = false;
+            if (selected.Length > 0)
+            {
+                try { var capabilities = await _client.GetCapabilitiesAsync(selected, ct.Token); _capabilities.Vision = capabilities.Contains("vision"); }
+                catch (Exception ex) when (ex is not OperationCanceledException) { ModelDetails += " · vision capability unavailable"; }
+            }
             OnPropertyChanged(nameof(Settings));
             if (models.Count == 0) Error = "Ollama is running, but no model is installed. Download one below with your permission.";
             else Error = "";

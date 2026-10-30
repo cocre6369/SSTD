@@ -144,3 +144,6 @@ public sealed class OllamaClient : IOllamaClient, IDisposable
     public void Dispose() => _http.Dispose();
 }
 public sealed class OllamaException(string message) : Exception(message);
+
+/// <summary>Capability metadata from Ollama /api/show; never inferred from a model name.</summary>
+public sealed class ModelCapabilities { public bool Vision { get; set; } }

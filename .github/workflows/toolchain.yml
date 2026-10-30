@@ -20,7 +20,11 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          tar --sort=name --mtime='2020-01-01' --owner=0 --group=0 --numeric-owner -czf /tmp/sdk.tar.gz -C "$DOTNET_ROOT" .
+          DOTNET_INSTALL_DIR="$(dirname "$(readlink -f "$(command -v dotnet)")")"
+          echo "Archiving official SDK from $DOTNET_INSTALL_DIR"
+          dotnet --info
+          tar --sort=name --mtime='2020-01-01' --owner=0 --group=0 --numeric-owner -czf /tmp/sdk.tar.gz -C "$DOTNET_INSTALL_DIR" .
+          echo "Archive bytes: $(stat -c %s /tmp/sdk.tar.gz)"
           split -b 8M -d /tmp/sdk.tar.gz /tmp/sdk-part-
           for part in /tmp/sdk-part-*; do
             python - "$part" <<'PY'

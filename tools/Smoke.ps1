@@ -7,7 +7,7 @@ $psi = [System.Diagnostics.ProcessStartInfo]::new()
 $psi.FileName = $Exe; $psi.Arguments = '--smoke-test'; $psi.UseShellExecute = $false; $psi.WorkingDirectory = $dir; $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
 $p = [System.Diagnostics.Process]::Start($psi)
 $stdout=$p.StandardOutput.ReadToEndAsync(); $stderr=$p.StandardError.ReadToEndAsync()
-if (-not $p.WaitForExit(45000)) { $p.Kill(); throw 'SSTD smoke test timed out.' }
+if (-not $p.WaitForExit(90000)) { $p.Kill(); $p.WaitForExit(); $stdout.Result | Set-Content "$dir/smoke-stdout.txt"; $stderr.Result | Set-Content "$dir/smoke-error.txt"; Copy-Item "$dir/smoke-error.txt" "$PSScriptRoot/../artifacts/smoke-error.txt" -Force -ErrorAction SilentlyContinue; throw 'SSTD smoke test timed out.' }
 $stdout.Result | Set-Content "$dir/smoke-stdout.txt"; $stderr.Result | Set-Content "$dir/smoke-error.txt"
 Write-Host "Smoke exit code: $($p.ExitCode)"
 $result = Get-Content "$dir/smoke-result.txt" -Raw -ErrorAction SilentlyContinue

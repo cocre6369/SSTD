@@ -4,6 +4,9 @@ on:
     branches: ['arena/**', main]
   pull_request:
   workflow_dispatch:
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: write
 jobs:

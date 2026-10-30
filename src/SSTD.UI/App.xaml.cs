@@ -80,8 +80,8 @@ public partial class App : System.Windows.Application
     public void ApplyPreferences(SstdSettings settings)
     {
         // Mutate shared brushes so existing StaticResource consumers update immediately.
-        ((SolidColorBrush)Resources["Background"]).Color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(settings.Theme == "Midnight" ? "#070B12" : "#0B0F14")!;
-        ((SolidColorBrush)Resources["Sidebar"]).Color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(settings.Theme == "Midnight" ? "#0B101B" : "#0E131B")!;
+        Resources["Background"] = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(settings.Theme == "Midnight" ? "#070B12" : "#0B0F14")!);
+        Resources["Sidebar"] = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(settings.Theme == "Midnight" ? "#0B101B" : "#0E131B")!);
         if (_tray is not null) _tray.Visible = settings.SystemTray;
     }
     private void CreateTray()

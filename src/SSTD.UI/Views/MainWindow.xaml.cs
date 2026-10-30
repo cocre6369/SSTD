@@ -45,7 +45,7 @@ public partial class MainWindow : Window
     public void RequestExit() { _exitRequested = true; Close(); }
     private void MainWindow_Closing(object? sender, CancelEventArgs e)
     {
-        if (!_exitRequested && _vm?.Settings.SystemTray == true) { e.Cancel = true; Hide(); return; }
+        if (!_exitRequested && _vm?.Settings.SystemTray == true && !((App)System.Windows.Application.Current).SmokeMode) { e.Cancel = true; Hide(); return; }
         _vm?.StopCommand.Execute(null);
     }
 }

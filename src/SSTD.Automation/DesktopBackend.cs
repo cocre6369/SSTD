@@ -11,8 +11,9 @@ using SSTD.Vision;
 
 namespace SSTD.Automation;
 
-public sealed class DesktopBackend(WindowsDesktop desktop, InputController input, ISecurityEngine security, Func<SstdSettings> settings, IVisualObserver vision, IActionServices services, WindowsVisualObserver visualObserver) : IDesktopBackend, IPolicyContext
+public sealed class DesktopBackend(WindowsDesktop desktop, InputController input, Func<SstdSettings> settings, IVisualObserver vision, IActionServices services, WindowsVisualObserver visualObserver, IServiceProvider provider) : IDesktopBackend, IPolicyContext
 {
+    private ISecurityEngine Security => (ISecurityEngine?)provider.GetService(typeof(ISecurityEngine)) ?? throw new InvalidOperationException("Security engine is unavailable.");
     private WindowSnapshot? _last;
     private string? _draft;
     public SstdSettings Settings => settings();
@@ -33,7 +34,7 @@ public sealed class DesktopBackend(WindowsDesktop desktop, InputController input
     public async Task<ActionResult> ExecuteAuthorizedAsync(AgentAction a, SecurityDecision decision, CancellationToken ct)
     {
         // Defense in depth: the backend cannot bypass the independent policy either.
-        var check = await security.AuthorizeAsync(a, ct).ConfigureAwait(false);
+        var check = await Security.AuthorizeAsync(a, ct).ConfigureAwait(false);
         if (!check.Allowed) return ActionResult.Fail(check.Reason);
         try
         {
@@ -210,7 +211,7 @@ public sealed class DesktopBackend(WindowsDesktop desktop, InputController input
         await Task.Run(() => input.EnsureTarget(w, ct), ct).ConfigureAwait(false);
         w = await CurrentAsync(ct).ConfigureAwait(false);
         // Resolve against the newly focused instance, not the old Z-order target.
-        var again = await security.AuthorizeAsync(a, ct).ConfigureAwait(false);
+        var again = await Security.AuthorizeAsync(a, ct).ConfigureAwait(false);
         if (!again.Allowed) return ActionResult.Fail(again.Reason);
         var e = a.Arguments.ContainsKey("elementId") ? w.Find(a.Str("elementId")) : w.Find(w.FocusedElementId ?? "");
         if (a.Arguments.ContainsKey("elementId") && e is null) return ActionResult.Fail("Element IDs changed during focus. Inspect the focused window again.");

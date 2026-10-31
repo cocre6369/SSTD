@@ -172,10 +172,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: ./tools/Publish-CiLog.ps1 -Path artifacts/msi-motw-windows.log
+      # The hosted runner sets DisableMsi=1, which blocks silent per-user MSI
+      # installs for the temporary standard user (error 1625). Run the silent
+      # lifecycle test as the runner administrator; the downloaded wizard and
+      # portable startup tests still run as a standard user.
       - name: MSI install, repair, and uninstall smoke test
         timeout-minutes: 5
         shell: pwsh
-        run: ./tools/Run-DesktopTests.ps1 -TimeoutSeconds 300 -Command "./tools/Msi-Smoke.ps1 -Msi artifacts/SSTD-Setup.msi"
+        run: ./tools/Msi-Smoke.ps1 -Msi artifacts/SSTD-Setup.msi
       - name: Preserve MSI smoke diagnostic
         if: always()
         shell: pwsh

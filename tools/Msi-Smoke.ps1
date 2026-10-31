@@ -41,6 +41,15 @@ try {
     if (-not (Test-Path $shortcut)) { throw "Start Menu shortcut missing: $shortcut" }
 
     Write-Stage 'uninstall-registration'
+    # Windows Installer may publish a per-user managed product's ARP entry under
+    # HKLM even when the product assignment is per-user. Prove the user context
+    # from the MSI log, install path, and HKCU component key instead of assuming
+    # the ARP registry root alone determines scope.
+    $installText = [System.IO.File]::ReadAllText($installLog, [System.Text.Encoding]::Unicode)
+    if ($installText -notmatch 'Assignment=0') { throw 'MSI log did not record a per-user product assignment (Assignment=0).' }
+    if (-not $target.StartsWith([System.IO.Path]::GetFullPath($env:LOCALAPPDATA), [System.StringComparison]::OrdinalIgnoreCase)) { throw "Install path is not user-local: $target" }
+    $componentKey = Get-ItemProperty 'HKCU:\Software\SSTD' -ErrorAction SilentlyContinue
+    if (-not $componentKey -or $componentKey.StartMenuShortcut -ne 1) { throw 'HKCU SSTD component key missing.' }
     $uninstallRoots = @(
         'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall',
         'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall',
@@ -51,14 +60,13 @@ try {
         if (-not (Test-Path $root)) { continue }
         $entry = Get-ChildItem $root -ErrorAction SilentlyContinue | ForEach-Object {
             $props = Get-ItemProperty $_.PSPath -ErrorAction SilentlyContinue
-            if ($props.DisplayName -like 'SSTD*') {
-                [pscustomobject]@{ Root = $root; Key = $_.PSChildName; DisplayName = $props.DisplayName; SystemComponent = $props.SystemComponent }
+            if ($props.DisplayName -like 'SSTD*' -and $props.UninstallString -match 'MsiExec') {
+                [pscustomobject]@{ Root = $root; Key = $_.PSChildName; DisplayName = $props.DisplayName; UninstallString = $props.UninstallString }
             }
         } | Select-Object -First 1
         if ($entry) { break }
     }
-    if (-not $entry) { throw 'SSTD uninstall registration missing.' }
-    if ($entry.Root -notlike 'HKCU:*') { throw "Expected per-user uninstall registration, found $($entry.Root)\$($entry.Key)." }
+    if (-not $entry) { throw 'SSTD Windows Installer uninstall registration missing.' }
     $productCode = $entry.Key
 
     Write-Stage "uninstall $productCode"
@@ -70,7 +78,7 @@ try {
     if (-not (Test-Path $sentinel)) { throw 'Uninstaller removed user data sentinel.' }
     Remove-Item $sentinel -Force -ErrorAction SilentlyContinue
 
-    $result = 'PASS: MSI per-user install exit 0; installed executable startup; reinstall/repair; Start Menu shortcut; registered per-user uninstaller; application and shortcut removal; user data retained.'
+    $result = 'PASS: MSI per-user product assignment; install exit 0; installed executable startup; reinstall/repair; Start Menu shortcut; Windows Installer uninstall registration; application and shortcut removal; user data retained.'
     $result | Set-Content $resultPath
     Write-Stage 'pass'
     Write-Host $result

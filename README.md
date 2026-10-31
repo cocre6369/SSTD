@@ -8,9 +8,9 @@
 ## Download and run
 
 **Download guide:** [DOWNLOAD.md](DOWNLOAD.md)  
-**Download page / Releases:** https://github.com/cocre6369/SSTD/releases/tag/v1.0.2
+**Download page / Releases:** https://github.com/cocre6369/SSTD/releases/tag/v1.0.3
 
-1. Download `SSTD-Setup.exe` from the download page or Releases page.
+1. Download `SSTD-Setup.exe` from the download page or Releases page. If the setup wizard does not open, download `SSTD-Portable.zip`, extract it, and run `SSTD.exe`.
 2. Verify its SHA-256 against `SHA256SUMS.txt`. The build is unsigned unless a signed release is explicitly identified.
 3. Run the installer. It installs for the current user and creates a Start Menu shortcut. Visual Studio, .NET development tools, and a terminal are **not** needed by end users.
 4. Install and start Ollama separately. See [Ollama setup](docs/OLLAMA.md).
@@ -56,7 +56,7 @@ On Windows with the .NET 8 SDK and Inno Setup 6:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass -Force
-./build.ps1 -Package all -Version 1.0.2
+./build.ps1 -Package all -Version 1.0.3
 ```
 
 Exact publish command:

@@ -152,6 +152,23 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: ./tools/Publish-CiLog.ps1 -Path artifacts/installer-interactive.log
+      - name: Mark-of-the-Web installer diagnostic
+        continue-on-error: true
+        timeout-minutes: 4
+        shell: pwsh
+        run: ./tools/Run-DesktopTests.ps1 -Command "./tools/Installer-InteractiveSmoke.ps1 -Installer artifacts/SSTD-Setup.exe -MarkOfTheWeb"
+      - name: Preserve Mark-of-the-Web installer diagnostic
+        if: always()
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./tools/Publish-CiLog.ps1 -Path artifacts/installer-motw.txt
+      - name: Preserve Mark-of-the-Web installer log
+        if: always()
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./tools/Publish-CiLog.ps1 -Path artifacts/installer-motw.log
       - name: Install, upgrade, and uninstall smoke test
         shell: pwsh
         run: ./tools/Installer-Smoke.ps1 -Installer artifacts/SSTD-Setup.exe
@@ -223,6 +240,8 @@ jobs:
             artifacts/installer-smoke.txt
             artifacts/installer-interactive.txt
             artifacts/installer-interactive.log
+            artifacts/installer-motw.txt
+            artifacts/installer-motw.log
             artifacts/installer.log
           if-no-files-found: warn
           retention-days: 14

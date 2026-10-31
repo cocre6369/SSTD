@@ -24,17 +24,17 @@ a{color:var(--accent)}main{max-width:960px;margin:0 auto;padding:48px 24px 80px}
 <section class="card hero">
   <div>
     <span class="pill">Verified Windows x64 build</span>
-    <h2>Download SSTD 1.0.3</h2>
-    <p class="muted">Self-contained installer or portable ZIP for Windows 10/11 x64. No .NET SDK or development tools required. Ollama is installed separately by you.</p>
+    <h2>Download SSTD 1.0.4</h2>
+    <p class="muted">Self-contained MSI installer or portable ZIP for Windows 10/11 x64. No .NET SDK or development tools required. Ollama is installed separately by you.</p>
     <p>
-      <a class="btn" href="https://github.com/cocre6369/SSTD/releases/download/v1.0.3/SSTD-Setup.exe">Download SSTD-Setup.exe</a>
-      <a class="btn secondary" href="https://github.com/cocre6369/SSTD/releases/download/v1.0.3/SSTD-Portable.zip">Portable ZIP</a>
-      <a class="btn secondary" href="https://github.com/cocre6369/SSTD/releases/tag/v1.0.3">Release notes</a>
+      <a class="btn" href="https://github.com/cocre6369/SSTD/releases/download/v1.0.4/SSTD-Setup.msi">Download SSTD-Setup.msi</a>
+      <a class="btn secondary" href="https://github.com/cocre6369/SSTD/releases/download/v1.0.4/SSTD-Portable.zip">Portable ZIP</a>
+      <a class="btn secondary" href="https://github.com/cocre6369/SSTD/releases/tag/v1.0.4">Release notes</a>
     </p>
-    <p class="muted">If the setup wizard does not open, download <code>SSTD-Portable.zip</code>, extract it, and run <code>SSTD.exe</code>.</p>
+    <p class="muted">If Windows Installer does not open, download <code>SSTD-Portable.zip</code>, extract it, and run <code>SSTD.exe</code>.</p>
   </div>
   <div class="meta">
-    <div><strong>Files:</strong> SSTD-Setup.exe and SSTD-Portable.zip</div>
+    <div><strong>Files:</strong> SSTD-Setup.msi and SSTD-Portable.zip</div>
     <div><strong>Platform:</strong> Windows 10 2004+ / Windows 11, x64</div>
     <div><strong>Install:</strong> per-user, Start Menu shortcut, scoped uninstaller</div>
     <div><strong>SHA-256:</strong><br>See <code>SHA256SUMS.txt</code> on the release page.</div>
@@ -45,7 +45,7 @@ a{color:var(--accent)}main{max-width:960px;margin:0 auto;padding:48px 24px 80px}
   <div class="card">
     <h2>Quick start</h2>
     <ol>
-      <li>Run <code>SSTD-Setup.exe</code>, or extract <code>SSTD-Portable.zip</code> and run <code>SSTD.exe</code>.</li>
+      <li>Run <code>SSTD-Setup.msi</code>, or extract <code>SSTD-Portable.zip</code> and run <code>SSTD.exe</code>.</li>
       <li>Install and start <a href="https://ollama.com">Ollama</a> separately.</li>
       <li>Pull a model, for example:<pre>ollama pull qwen2.5:7b-instruct</pre></li>
       <li>Open SSTD, connect to <code>http://localhost:11434</code>, and select a model.</li>
@@ -58,8 +58,8 @@ a{color:var(--accent)}main{max-width:960px;margin:0 auto;padding:48px 24px 80px}
       <li>142 portable security/contract/unit tests passed.</li>
       <li>4 real Windows UI Automation tests passed.</li>
       <li>Executable startup smoke passed.</li>
-      <li>Installer install/start/uninstall smoke passed.</li>
-      <li>Installer SHA-256 matched after retrieval.</li>
+      <li>CI gates: downloaded MSI wizard, install/repair/uninstall, and portable startup smoke.</li>
+      <li>Release assets are checksummed.</li>
     </ul>
     <p class="muted">CI did not run end-to-end tasks against a live Ollama model.</p>
   </div>
@@ -72,7 +72,7 @@ a{color:var(--accent)}main{max-width:960px;margin:0 auto;padding:48px 24px 80px}
 
 <section class="card">
   <h2>Verify the download</h2>
-  <pre>Get-FileHash .\SSTD-Setup.exe -Algorithm SHA256</pre>
+  <pre>Get-FileHash .\SSTD-Setup.msi -Algorithm SHA256</pre>
   <p class="muted">Expected hashes are published in <code>SHA256SUMS.txt</code> on the release page. The build is unsigned unless a signed release is explicitly identified.</p>
 </section>
 

@@ -1,4 +1,4 @@
-param([string]$Repository = (Split-Path $PSScriptRoot -Parent), [string]$Command = './tools/Windows-Integration.ps1')
+param([string]$Repository = (Split-Path $PSScriptRoot -Parent), [string]$Command = './tools/Windows-Integration.ps1', [int]$TimeoutSeconds = 150)
 $ErrorActionPreference='Stop'
 $result=Join-Path $Repository 'artifacts/desktop-test-exit.txt'
 $log=Join-Path $Repository 'artifacts/desktop-task.log'
@@ -46,7 +46,7 @@ $pi=[CiLogon.Native+PROCESS_INFORMATION]::new()
 try{
   if(-not [CiLogon.Native]::CreateProcessWithLogonW($user,'.',$password,1,$pwsh,$cmdline,0x400,[IntPtr]::Zero,$Repository,[ref]$si,[ref]$pi)){throw "CreateProcessWithLogonW failed: $([Runtime.InteropServices.Marshal]::GetLastWin32Error())"}
   try{
-    [void][CiLogon.Native]::WaitForSingleObject($pi.process,150000)
+    [void][CiLogon.Native]::WaitForSingleObject($pi.process,($TimeoutSeconds * 1000))
     [uint32]$code=0;[void][CiLogon.Native]::GetExitCodeProcess($pi.process,[ref]$code)
     if(Test-Path $log){Get-Content $log | Write-Host}
     if($code -eq 259){[void][CiLogon.Native]::TerminateProcess($pi.process,259);throw 'Desktop verification timed out.'}

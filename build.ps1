@@ -2,12 +2,12 @@
 .SYNOPSIS
 Builds SSTD on Windows x64. No Visual Studio required.
 .EXAMPLE
-./build.ps1 -Package all -Version 1.0.0
+./build.ps1 -Package all -Version 1.0.4
 #>
 [CmdletBinding()]
 param(
     [ValidateSet('test','portable','installer','all')][string]$Package = 'all',
-    [string]$Version = '1.0.0',
+    [string]$Version = '1.0.4',
     [switch]$SkipTests,
     [switch]$NoRestore
 )
@@ -44,16 +44,17 @@ try {
         & "$root/tools/Package-Portable.ps1" -PublishDir "$artifacts/publish" -OutputZip "$artifacts/SSTD-Portable.zip"
     }
     if ($Package -in 'installer','all') {
-        $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-        if (-not (Test-Path $iscc)) { throw 'Install Inno Setup 6 first: winget install JRSoftware.InnoSetup' }
-        & $iscc "/DAppVersion=$Version" "$root/installer/SSTD.iss"
-        if ($LASTEXITCODE) { throw 'Installer build failed.' }
-        & "$root/tools/Installer-Smoke.ps1" -Installer "$artifacts/SSTD-Setup.exe"
+        & "$root/tools/Package-Msi.ps1" -PublishDir "$artifacts/publish" -OutputMsi "$artifacts/SSTD-Setup.msi" -Version $Version
+        & "$root/tools/Msi-Smoke.ps1" -Msi "$artifacts/SSTD-Setup.msi"
     }
     if (Test-Path "$artifacts/publish/SSTD.exe") {
-        $hashes = Get-ChildItem $artifacts -File | Where-Object { $_.Extension -in '.exe','.zip' }
-        $hashes += Get-Item "$artifacts/publish/SSTD.exe"
-        $hashes | Get-FileHash -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLowerInvariant())  $([System.IO.Path]::GetFileName($_.Path))" } | Set-Content "$artifacts/SHA256SUMS.txt"
+        $hashFiles = @()
+        foreach ($name in @('SSTD-Setup.msi','SSTD-Portable.zip')) {
+            $path = Join-Path $artifacts $name
+            if (Test-Path $path) { $hashFiles += Get-Item $path }
+        }
+        $hashFiles += Get-Item "$artifacts/publish/SSTD.exe"
+        $hashFiles | Get-FileHash -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLowerInvariant())  $([System.IO.Path]::GetFileName($_.Path))" } | Set-Content "$artifacts/SHA256SUMS.txt"
     }
     Write-Host "SSTD build complete. Outputs: $artifacts" -ForegroundColor Green
 }

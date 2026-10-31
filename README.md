@@ -8,11 +8,11 @@
 ## Download and run
 
 **Download guide:** [DOWNLOAD.md](DOWNLOAD.md)  
-**Download page / Releases:** https://github.com/cocre6369/SSTD/releases/tag/v1.0.3
+**Download page / Releases:** https://github.com/cocre6369/SSTD/releases/tag/v1.0.4
 
-1. Download `SSTD-Setup.exe` from the download page or Releases page. If the setup wizard does not open, download `SSTD-Portable.zip`, extract it, and run `SSTD.exe`.
+1. Download `SSTD-Setup.msi` from the download page or Releases page. If Windows Installer does not open, download `SSTD-Portable.zip`, extract it, and run `SSTD.exe`.
 2. Verify its SHA-256 against `SHA256SUMS.txt`. The build is unsigned unless a signed release is explicitly identified.
-3. Run the installer. It installs for the current user and creates a Start Menu shortcut. Visual Studio, .NET development tools, and a terminal are **not** needed by end users.
+3. Run the MSI. It installs for the current user through Windows Installer and creates a Start Menu shortcut. Visual Studio, .NET development tools, and a terminal are **not** needed by end users.
 4. Install and start Ollama separately. See [Ollama setup](docs/OLLAMA.md).
 5. Open SSTD, select an installed model, and test conversation.
 6. Review **Settings → Automation**, then enable desktop control. Try: **“Open Notepad and type Hello from SSTD into a new document. Verify the text.”**
@@ -52,22 +52,21 @@ The backend rechecks policy and target identity. Approvals are one-shot and dest
 
 ## Build from source
 
-On Windows with the .NET 8 SDK and Inno Setup 6:
+On Windows with the .NET 8 SDK and WiX v4.0.5:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass -Force
-./build.ps1 -Package all -Version 1.0.3
+./build.ps1 -Package all -Version 1.0.4
 ```
 
 Exact publish command:
 
 ```powershell
 dotnet publish src/SSTD.UI/SSTD.UI.csproj -c Release -r win-x64 --self-contained true `
-  -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
-  -p:EnableCompressionInSingleFile=true -o artifacts/publish
+  -p:PublishSingleFile=false -p:DebugType=embedded -o artifacts/publish
 ```
 
-On Linux, `./build.sh test` runs portable tests; `./build.sh cross-publish` produces a Windows binary but cannot validate the WPF runtime. The included native Windows CI workflow builds, tests, packages and smoke-tests installation/uninstallation.
+On Linux, `./build.sh test` runs portable tests; `./build.sh cross-publish` produces a Windows binary but cannot validate the WPF runtime. The included native Windows CI workflow builds, tests, packages and smoke-tests downloaded MSI/portable startup, installation, repair, and uninstallation.
 
 Full instructions: [Build and packaging](docs/BUILD.md).
 

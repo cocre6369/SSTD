@@ -1,7 +1,6 @@
 name: Transfer verified installer
 on:
-  push:
-    branches: [arena/6dc16062-sstd]
+  workflow_dispatch:
 permissions:
   contents: write
   actions: read

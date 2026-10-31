@@ -186,6 +186,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: ./tools/Publish-CiLog.ps1 -Path artifacts/msi-smoke.txt
+      - name: Preserve MSI smoke stage
+        if: always()
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./tools/Publish-CiLog.ps1 -Path artifacts/msi-smoke-stage.txt
       - name: Preserve MSI install log
         if: always()
         shell: pwsh

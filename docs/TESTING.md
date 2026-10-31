@@ -5,7 +5,7 @@
 Run `41056877597` on branch `arena/6dc16062-sstd` completed the native Windows packaging path:
 
 - Restore/build: passed.
-- Portable security/contract/unit suite: passed (140 tests in the portable suite).
+- Portable security/contract/unit suite: passed (142 tests in the portable suite).
 - Real Windows UI Automation integration: **4 passed / 0 failed**.
   - guarded fixture typing, clicking, adaptive off-screen search and verification;
   - password-context refusal;

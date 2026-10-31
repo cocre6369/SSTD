@@ -8,7 +8,7 @@
 ## Download and run
 
 **Download guide:** [DOWNLOAD.md](DOWNLOAD.md)  
-**Download page / Releases:** https://github.com/cocre6369/SSTD/releases/tag/v1.0.1
+**Download page / Releases:** https://github.com/cocre6369/SSTD/releases/tag/v1.0.2
 
 1. Download `SSTD-Setup.exe` from the download page or Releases page.
 2. Verify its SHA-256 against `SHA256SUMS.txt`. The build is unsigned unless a signed release is explicitly identified.
@@ -56,7 +56,7 @@ On Windows with the .NET 8 SDK and Inno Setup 6:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass -Force
-./build.ps1 -Package all -Version 1.0.1
+./build.ps1 -Package all -Version 1.0.2
 ```
 
 Exact publish command:

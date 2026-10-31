@@ -7,3 +7,5 @@ Desktop control starts disabled. Review Settings before enabling it. SSTD cannot
 The installer installs only SSTD and its shortcuts for the current Windows user. The uninstaller removes SSTD application files, not your documents, Ollama, or Ollama models. Clear local history in Settings before uninstalling if desired.
 
 Windows 10 version 2004 (build 19041) or later, Windows 11, x64. Administrator privileges are not required.
+
+If SSTD is already running, exit it from the tray or Task Manager before installing. If the setup wizard still does not appear, use the portable ZIP from the same release: extract it to a folder you own and run SSTD.exe. The portable build uses the same local SSTD data folder.

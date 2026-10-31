@@ -1,6 +1,6 @@
 #define AppName "SSTD"
 #ifndef AppVersion
-#define AppVersion "1.0.2"
+#define AppVersion "1.0.3"
 #endif
 #define ExeName "SSTD.exe"
 [Setup]
@@ -25,8 +25,12 @@ WizardStyle=modern
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.19041
-CloseApplications=yes
+; Do not let Restart Manager silently stall setup when a previous SSTD process is hidden or failed.
+; AppMutex makes the running-app check explicit and user-visible instead.
+AppMutex=Local\SSTD.Desktop.SingleInstance
+CloseApplications=no
 RestartApplications=no
+SetupLogging=yes
 VersionInfoVersion={#AppVersion}.0
 VersionInfoDescription=SSTD — Super Terminal of Deepthinking installer
 LicenseFile=..\LICENSE

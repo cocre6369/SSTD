@@ -40,6 +40,9 @@ try {
         if ($LASTEXITCODE) { throw 'Publish failed.' }
         & "$root/tools/Smoke.ps1" -Exe "$publish/SSTD.exe"
     }
+    if ($Package -in 'portable','all') {
+        & "$root/tools/Package-Portable.ps1" -PublishDir "$artifacts/publish" -OutputZip "$artifacts/SSTD-Portable.zip"
+    }
     if ($Package -in 'installer','all') {
         $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
         if (-not (Test-Path $iscc)) { throw 'Install Inno Setup 6 first: winget install JRSoftware.InnoSetup' }
@@ -48,7 +51,7 @@ try {
         & "$root/tools/Installer-Smoke.ps1" -Installer "$artifacts/SSTD-Setup.exe"
     }
     if (Test-Path "$artifacts/publish/SSTD.exe") {
-        $hashes = Get-ChildItem $artifacts -File | Where-Object { $_.Extension -eq '.exe' }
+        $hashes = Get-ChildItem $artifacts -File | Where-Object { $_.Extension -in '.exe','.zip' }
         $hashes += Get-Item "$artifacts/publish/SSTD.exe"
         $hashes | Get-FileHash -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLowerInvariant())  $([System.IO.Path]::GetFileName($_.Path))" } | Set-Content "$artifacts/SHA256SUMS.txt"
     }

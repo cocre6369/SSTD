@@ -2,10 +2,17 @@ param([Parameter(Mandatory)][string]$Installer)
 $ErrorActionPreference = 'Stop'
 $Installer = (Resolve-Path $Installer).Path
 $target = Join-Path $env:LOCALAPPDATA 'Programs\SSTD'
+$art = Join-Path $PSScriptRoot '../artifacts'
+New-Item -ItemType Directory -Force $art | Out-Null
+$installLog = Join-Path $art 'installer.log'
 $stamp = Get-Date
-$proc = Start-Process $Installer -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-' -Wait -PassThru
+$proc = Start-Process $Installer -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-',"/LOG=$installLog" -Wait -PassThru
 if ($proc.ExitCode -ne 0) { throw "Installer exit code $($proc.ExitCode)" }
 if (-not (Test-Path "$target/SSTD.exe")) { throw 'Installed executable missing.' }
+& "$PSScriptRoot/Smoke.ps1" -Exe "$target/SSTD.exe"
+# Verify an in-place upgrade does not depend on Restart Manager or a fresh profile.
+$upgrade = Start-Process $Installer -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-',"/LOG=$installLog" -Wait -PassThru
+if ($upgrade.ExitCode -ne 0) { throw "Upgrade installer exit code $($upgrade.ExitCode)" }
 & "$PSScriptRoot/Smoke.ps1" -Exe "$target/SSTD.exe"
 $shortcut = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\SSTD.lnk'
 if (-not (Test-Path $shortcut)) { throw 'Start Menu shortcut missing.' }
@@ -20,7 +27,7 @@ $deadline = (Get-Date).AddSeconds(25)
 while ((Test-Path "$target/SSTD.exe") -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 250 }
 if (Test-Path "$target/SSTD.exe") { throw 'Uninstaller left the application executable.' }
 if (Test-Path $shortcut) { throw 'Uninstaller left the Start Menu shortcut.' }
-$result = "PASS: installer exit 0; installed executable startup; Start Menu shortcut; registered uninstaller; application and shortcut removal.`nUser data is deliberately retained; remove it from Settings before uninstall if desired."
+$result = "PASS: installer exit 0; installed executable startup; in-place upgrade; Start Menu shortcut; registered uninstaller; application and shortcut removal.`nUser data is deliberately retained; remove it from Settings before uninstall if desired."
 New-Item -ItemType Directory -Force "$PSScriptRoot/../artifacts" | Out-Null
 $result | Set-Content "$PSScriptRoot/../artifacts/installer-smoke.txt"
 Write-Host $result

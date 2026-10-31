@@ -129,16 +129,47 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: ./tools/Publish-CiLog.ps1 -Path artifacts/smoke-unhandled.txt
+      - name: Package portable ZIP
+        shell: pwsh
+        run: ./tools/Package-Portable.ps1 -PublishDir artifacts/publish -OutputZip artifacts/SSTD-Portable.zip
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y
       - name: Build installer
         run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\SSTD.iss'
-      - name: Install, restart, and uninstall smoke test
+      - name: Interactive installer wizard smoke test
+        timeout-minutes: 4
+        shell: pwsh
+        run: ./tools/Run-DesktopTests.ps1 -Command "./tools/Installer-InteractiveSmoke.ps1 -Installer artifacts/SSTD-Setup.exe"
+      - name: Preserve interactive installer diagnostic
+        if: always()
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./tools/Publish-CiLog.ps1 -Path artifacts/installer-interactive.txt
+      - name: Preserve interactive installer log
+        if: always()
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./tools/Publish-CiLog.ps1 -Path artifacts/installer-interactive.log
+      - name: Install, upgrade, and uninstall smoke test
         shell: pwsh
         run: ./tools/Installer-Smoke.ps1 -Installer artifacts/SSTD-Setup.exe
+      - name: Preserve installer log
+        if: always()
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./tools/Publish-CiLog.ps1 -Path artifacts/installer.log
       - name: Checksums
         shell: pwsh
-        run: 'Get-FileHash artifacts/SSTD-Setup.exe -Algorithm SHA256 | Format-List | Out-File artifacts/SHA256SUMS.txt'
+        run: |
+          $files = @('artifacts/SSTD-Setup.exe', 'artifacts/SSTD-Portable.zip')
+          $lines = foreach ($file in $files) {
+            $hash = (Get-FileHash $file -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $(Split-Path $file -Leaf)"
+          }
+          $lines | Set-Content artifacts/SHA256SUMS.txt
       - name: Preserve checksums
         if: always()
         shell: pwsh
@@ -152,6 +183,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           ./tools/Publish-ArtifactBlobs.ps1 -Path artifacts/SSTD-Setup.exe -Label SSTD-Setup.exe
+          ./tools/Publish-ArtifactBlobs.ps1 -Path artifacts/SSTD-Portable.zip -Label SSTD-Portable.zip
           ./tools/Publish-ArtifactBlobs.ps1 -Path artifacts/SHA256SUMS.txt -Label SHA256SUMS.txt
       - name: Publish GitHub release
         if: success() && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
@@ -163,13 +195,14 @@ jobs:
           $version = @($props.Project.PropertyGroup.Version)[0]
           $tag = "v$version"
           $hash = (Get-FileHash artifacts/SSTD-Setup.exe -Algorithm SHA256).Hash.ToLowerInvariant()
-          $notes = "Self-contained Windows 10/11 x64 installer. SHA-256: $hash. Fixes SQLite schema migration for older local databases, including tasks, messages, events, and settings. Ollama is installed separately by the user."
+          $portableHash = (Get-FileHash artifacts/SSTD-Portable.zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          $notes = "Self-contained Windows 10/11 x64. Installer SHA-256: $hash. Portable ZIP SHA-256: $portableHash. 1.0.3 avoids Restart Manager setup stalls, adds setup logging and a portable fallback, and includes the 1.0.2 SQLite repair for tasks/messages/events/settings. Ollama is installed separately by the user."
           gh release view $tag *> $null
           if ($LASTEXITCODE -ne 0) {
             gh release create $tag --target $env:GITHUB_SHA --title "SSTD $version — Windows x64" --notes $notes
             if ($LASTEXITCODE -ne 0) { throw 'Release creation failed.' }
           }
-          gh release upload $tag artifacts/SSTD-Setup.exe artifacts/SHA256SUMS.txt --clobber
+          gh release upload $tag artifacts/SSTD-Setup.exe artifacts/SSTD-Portable.zip artifacts/SHA256SUMS.txt --clobber
           if ($LASTEXITCODE -ne 0) { throw 'Release upload failed.' }
           gh release edit $tag --notes $notes
           if ($LASTEXITCODE -ne 0) { throw 'Release notes update failed.' }
@@ -180,6 +213,7 @@ jobs:
           path: |
             artifacts/publish/SSTD.exe
             artifacts/SSTD-Setup.exe
+            artifacts/SSTD-Portable.zip
             artifacts/SHA256SUMS.txt
             artifacts/restore.log
             artifacts/build.log
@@ -187,5 +221,8 @@ jobs:
             artifacts/windows.log
             artifacts/smoke-result.txt
             artifacts/installer-smoke.txt
+            artifacts/installer-interactive.txt
+            artifacts/installer-interactive.log
+            artifacts/installer.log
           if-no-files-found: warn
           retention-days: 14

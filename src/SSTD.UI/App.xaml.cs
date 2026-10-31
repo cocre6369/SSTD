@@ -74,7 +74,13 @@ public partial class App : System.Windows.Application
         catch (Exception ex)
         {
             if (SmokeMode) { await File.WriteAllTextAsync(Path.Combine(SmokeDirectory, "smoke-error.txt"), SensitiveData.SafeError(ex)); Shutdown(2); }
-            else System.Windows.MessageBox.Show("SSTD could not start:\n" + SensitiveData.SafeError(ex), "SSTD startup error", MessageBoxButton.OK, MessageBoxImage.Error);
+            else
+            {
+                System.Windows.MessageBox.Show("SSTD could not start:\n" + SensitiveData.SafeError(ex), "SSTD startup error", MessageBoxButton.OK, MessageBoxImage.Error);
+                // A failed startup must not leave a hidden process holding the single-instance mutex
+                // or installed files open; that can make subsequent setup/upgrade attempts appear dead.
+                Shutdown(2);
+            }
         }
     }
     public void ApplyPreferences(SstdSettings settings)

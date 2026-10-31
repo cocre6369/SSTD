@@ -163,7 +163,7 @@ jobs:
           $version = @($props.Project.PropertyGroup.Version)[0]
           $tag = "v$version"
           $hash = (Get-FileHash artifacts/SSTD-Setup.exe -Algorithm SHA256).Hash.ToLowerInvariant()
-          $notes = "Self-contained Windows 10/11 x64 installer. SHA-256: $hash. Fixes SQLite task-history schema migration for older local databases. Ollama is installed separately by the user."
+          $notes = "Self-contained Windows 10/11 x64 installer. SHA-256: $hash. Fixes SQLite schema migration for older local databases, including tasks, messages, events, and settings. Ollama is installed separately by the user."
           gh release view $tag *> $null
           if ($LASTEXITCODE -ne 0) {
             gh release create $tag --target $env:GITHUB_SHA --title "SSTD $version — Windows x64" --notes $notes

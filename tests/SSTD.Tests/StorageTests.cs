@@ -76,4 +76,91 @@ INSERT INTO events(task_id,time,phase,message,success) VALUES('legacy','2026-01-
             try { Directory.Delete(dir, true); } catch (IOException) { }
         }
     }
+    [Fact] public async Task Legacy_Messages_With_ConversationId_NotNull_Are_Repaired()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "sstd-legacy-msg-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        try
+        {
+            var cs = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder { DataSource = Path.Combine(dir, "sstd.db") }.ToString();
+            using (var db = new Microsoft.Data.Sqlite.SqliteConnection(cs))
+            {
+                await db.OpenAsync();
+                using var cmd = db.CreateCommand();
+                cmd.CommandText = @"CREATE TABLE messages(id INTEGER PRIMARY KEY AUTOINCREMENT, conversation_id TEXT NOT NULL, role TEXT NOT NULL, content TEXT NOT NULL, created_at TEXT);
+INSERT INTO messages(conversation_id,role,content) VALUES('c1','user','old question');
+INSERT INTO messages(conversation_id,role,content) VALUES('c1','assistant','old answer');
+INSERT INTO messages(conversation_id,role,content) VALUES('c1','system','drop me');";
+                await cmd.ExecuteNonQueryAsync();
+            }
+            await using var store = new LocalStore(dir);
+            await store.LoadAsync(default);
+            await store.AppendAsync(new("user", "new question"), default);
+            var recent = await store.RecentAsync(10, default);
+            Assert.Contains(recent, m => m.Role == "user" && m.Content == "old question");
+            Assert.Contains(recent, m => m.Role == "assistant" && m.Content == "old answer");
+            Assert.Contains(recent, m => m.Role == "user" && m.Content == "new question");
+            Assert.DoesNotContain(recent, m => m.Content == "drop me");
+            using (var db = new Microsoft.Data.Sqlite.SqliteConnection(cs))
+            {
+                await db.OpenAsync();
+                using var cmd = db.CreateCommand();
+                cmd.CommandText = "PRAGMA table_info(messages);";
+                using var reader = await cmd.ExecuteReaderAsync();
+                var columns = new List<string>();
+                while (await reader.ReadAsync()) columns.Add(reader.GetString(1));
+                Assert.Equal(new[] { "id", "role", "content" }, columns);
+            }
+        }
+        finally
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            try { Directory.Delete(dir, true); } catch (IOException) { }
+        }
+    }
+    [Fact] public async Task Legacy_Settings_And_Events_With_Extra_Columns_Are_Repaired()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "sstd-legacy-set-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        try
+        {
+            var cs = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder { DataSource = Path.Combine(dir, "sstd.db") }.ToString();
+            using (var db = new Microsoft.Data.Sqlite.SqliteConnection(cs))
+            {
+                await db.OpenAsync();
+                using var cmd = db.CreateCommand();
+                cmd.CommandText = @"CREATE TABLE settings(key TEXT PRIMARY KEY, value TEXT NOT NULL, extra TEXT NOT NULL DEFAULT 'x');
+INSERT INTO settings(key,value) VALUES('settings','{""Model"":""legacy:7b""}');
+CREATE TABLE tasks(id TEXT PRIMARY KEY, request TEXT NOT NULL, status TEXT NOT NULL, created TEXT NOT NULL, updated TEXT NOT NULL);
+INSERT INTO tasks VALUES('legacy','old request','Completed','2026-01-01T00:00:00+00:00','2026-01-02T00:00:00+00:00');
+CREATE TABLE events(id INTEGER PRIMARY KEY AUTOINCREMENT,task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,time TEXT NOT NULL,phase TEXT NOT NULL,message TEXT NOT NULL,success INTEGER NOT NULL,extra TEXT NOT NULL DEFAULT 'x');
+INSERT INTO events(task_id,time,phase,message,success) VALUES('legacy','2026-01-01T00:00:00+00:00','Verify','kept',1);";
+                await cmd.ExecuteNonQueryAsync();
+            }
+            await using var store = new LocalStore(dir);
+            var loaded = await store.LoadAsync(default);
+            Assert.Equal("legacy:7b", loaded.Model);
+            await store.SaveAsync(new SstdSettings { Model = "new:7b" }, default);
+            Assert.Equal("new:7b", (await store.LoadAsync(default)).Model);
+            await store.EventAsync("legacy", new(DateTimeOffset.UtcNow, "Verify", "new event"), default);
+            var detail = await store.GetAsync("legacy", default);
+            Assert.NotNull(detail);
+            Assert.Equal(2, detail!.Events.Count);
+            using (var db = new Microsoft.Data.Sqlite.SqliteConnection(cs))
+            {
+                await db.OpenAsync();
+                using var cmd = db.CreateCommand();
+                cmd.CommandText = "PRAGMA table_info(events);";
+                using var reader = await cmd.ExecuteReaderAsync();
+                var columns = new List<string>();
+                while (await reader.ReadAsync()) columns.Add(reader.GetString(1));
+                Assert.Equal(new[] { "id", "task_id", "time", "phase", "message", "success" }, columns);
+            }
+        }
+        finally
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            try { Directory.Delete(dir, true); } catch (IOException) { }
+        }
+    }
 }
